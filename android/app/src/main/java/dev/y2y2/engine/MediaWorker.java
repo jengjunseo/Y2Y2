@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
@@ -46,11 +47,18 @@ final class MediaWorker {
         initialized.set(true);
     }
 
-    static String validateUrl(String raw) throws Exception {
+    static String validateUrl(String raw) {
         if (raw == null || raw.length() > 2048) throw new IllegalArgumentException("Invalid URL");
-        URI u = new URI(raw.trim()); String host = u.getHost() == null ? "" : u.getHost().toLowerCase(Locale.ROOT);
-        if (!("http".equals(u.getScheme()) || "https".equals(u.getScheme())) || !HOSTS.contains(host)) throw new IllegalArgumentException("Only standard YouTube URLs are supported");
-        return raw.trim();
+        try {
+            URI u = new URI(raw.trim());
+            String host = u.getHost() == null ? "" : u.getHost().toLowerCase(Locale.ROOT);
+            if (!("http".equals(u.getScheme()) || "https".equals(u.getScheme())) || !HOSTS.contains(host)) {
+                throw new IllegalArgumentException("Only standard YouTube URLs are supported");
+            }
+            return raw.trim();
+        } catch (URISyntaxException error) {
+            throw new IllegalArgumentException("Invalid URL", error);
+        }
     }
 
     JSONObject inspect(String raw) throws Exception {
