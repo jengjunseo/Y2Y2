@@ -1,6 +1,6 @@
 {
   "name": "y2y2",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -10,6 +10,6 @@
     "check": "node --check api/health.js && node --check api/inspect.js && node --check api/jobs.js && node --check api/job.js && node --check api/history.js && node --check api/download.js && node --check lib/sandbox.js && node --check lib/http.js && python3 -m py_compile sandbox/backend.py"
   },
   "dependencies": {
-    "@vercel/sandbox": "^1.0.2"
+    "@vercel/sandbox": "2.9.2"
   }
 }
