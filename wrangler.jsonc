@@ -1,0 +1,58 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "y2y2",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-08-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "y2y2-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ARTIFACTS",
+      "bucket_name": "y2y2-artifacts"
+    }
+  ],
+  "workflows": [
+    {
+      "binding": "MEDIA_WORKFLOW",
+      "name": "y2y2-media",
+      "class_name": "MediaWorkflow"
+    }
+  ],
+  "containers": [
+    {
+      "class_name": "MediaContainer",
+      "image": "./container/Dockerfile",
+      "max_instances": 4,
+      "instance_type": "standard-1"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MEDIA_CONTAINER",
+        "class_name": "MediaContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["MediaContainer"]
+    }
+  ]
+}
