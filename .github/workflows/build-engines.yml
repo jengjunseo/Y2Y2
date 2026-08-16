@@ -1,0 +1,99 @@
+name: Build Distributed Engines
+
+on:
+  push:
+    branches: [main, feat/distributed-engine-v03]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm run check
+
+  windows-engine:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: engine/windows/requirements.txt
+      - name: Install engine dependencies
+        run: python -m pip install -r engine/windows/requirements.txt pytest pyinstaller==6.21.0
+      - name: Unit tests
+        run: python -m pytest -q engine/windows/tests
+      - name: Bundle Deno 2.8.1
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/denoland/deno/releases/download/v2.8.1/deno-x86_64-pc-windows-msvc.zip" -OutFile deno.zip
+          Expand-Archive deno.zip -DestinationPath engine/windows/vendor
+          engine/windows/vendor/deno.exe --version
+      - name: Build portable engine
+        shell: pwsh
+        run: |
+          pyinstaller --clean --onefile --name Y2Y2-Engine-Windows-x64 `
+            --add-binary "engine/windows/vendor/deno.exe;." `
+            --collect-all yt_dlp --collect-all yt_dlp_ejs --collect-all imageio_ffmpeg `
+            engine/windows/y2y2_engine.py
+      - name: Portable engine protocol smoke
+        shell: pwsh
+        run: |
+          $env:Y2Y2_APP_DATA_DIR = "$env:RUNNER_TEMP\y2y2-data"
+          $env:Y2Y2_DOWNLOAD_DIR = "$env:RUNNER_TEMP\y2y2-downloads"
+          $p = Start-Process -FilePath ".\dist\Y2Y2-Engine-Windows-x64.exe" -PassThru
+          try {
+            $ok = $false
+            for ($i=0; $i -lt 40; $i++) {
+              Start-Sleep -Milliseconds 500
+              try {
+                $h = Invoke-RestMethod -Uri "http://127.0.0.1:49272/v1/health" -Headers @{ Origin = "https://y2-y2.vercel.app" }
+                if ($h.protocolVersion -eq 1 -and $h.platform -eq "windows") { $ok = $true; break }
+              } catch {}
+            }
+            if (-not $ok) { throw "Engine health did not become ready" }
+            try {
+              Invoke-WebRequest -Uri "http://127.0.0.1:49272/v1/health" -Headers @{ Origin = "https://evil.example" } -ErrorAction Stop
+              throw "Disallowed origin unexpectedly succeeded"
+            } catch {
+              if ($_.Exception.Response.StatusCode.value__ -ne 403) { throw }
+            }
+          } finally {
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Y2Y2-Engine-Windows-x64
+          path: dist/Y2Y2-Engine-Windows-x64.exe
+          if-no-files-found: error
+
+  android-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: yes | sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+      - name: Build debug APK
+        run: gradle -p android :app:assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Y2Y2-Engine-Android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

@@ -1,0 +1,127 @@
+const DEFAULT_BASE = "http://127.0.0.1:49272";
+const TOKEN_KEY = "y2y2.engine.token.v1";
+const PROTOCOL_VERSION = 1;
+
+export class EngineError extends Error {
+  constructor(message, { status = 0, code = "ENGINE_ERROR", cause } = {}) {
+    super(message, cause ? { cause } : undefined);
+    this.name = "EngineError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+function makeRequest(url, init = {}) {
+  const options = { ...init, mode: "cors", cache: "no-store" };
+  try {
+    return new Request(url, { ...options, targetAddressSpace: "loopback" });
+  } catch {
+    return new Request(url, options);
+  }
+}
+
+export class EngineClient {
+  constructor(baseUrl = DEFAULT_BASE) {
+    this.baseUrl = baseUrl.replace(/\/$/, "");
+    this.token = localStorage.getItem(TOKEN_KEY) || "";
+  }
+
+  setToken(token) {
+    this.token = token || "";
+    if (this.token) localStorage.setItem(TOKEN_KEY, this.token);
+    else localStorage.removeItem(TOKEN_KEY);
+  }
+
+  async request(path, { method = "GET", body, auth = true } = {}) {
+    const headers = {};
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (auth && this.token) headers.Authorization = `Bearer ${this.token}`;
+    let response;
+    try {
+      response = await fetch(makeRequest(`${this.baseUrl}${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      }));
+    } catch (cause) {
+      throw new EngineError("Local Engine에 연결할 수 없습니다.", { code: "ENGINE_OFFLINE", cause });
+    }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new EngineError(data.error || `Engine request failed (${response.status})`, {
+        status: response.status,
+        code: data.code || (response.status === 401 ? "PAIRING_REQUIRED" : "ENGINE_REQUEST_FAILED"),
+      });
+    }
+    return data;
+  }
+
+  health() {
+    return this.request("/v1/health", { auth: false });
+  }
+
+  authCheck() {
+    return this.request("/v1/auth-check");
+  }
+
+  async pair(code) {
+    const data = await this.request("/v1/pair", { method: "POST", body: { code }, auth: false });
+    if (!data.token) throw new EngineError("Engine이 pairing token을 반환하지 않았습니다.");
+    this.setToken(data.token);
+    return data;
+  }
+
+  inspect(url) {
+    return this.request("/v1/inspect", { method: "POST", body: { url } });
+  }
+
+  createBatch(items) {
+    return this.request("/v1/batch", { method: "POST", body: { items } });
+  }
+
+  createJob(item) {
+    return this.request("/v1/jobs", { method: "POST", body: item });
+  }
+
+  jobs() {
+    return this.request("/v1/jobs");
+  }
+
+  job(id) {
+    return this.request(`/v1/jobs/${encodeURIComponent(id)}`);
+  }
+
+  retry(id) {
+    return this.request(`/v1/jobs/${encodeURIComponent(id)}/retry`, { method: "POST", body: {} });
+  }
+
+  reveal(id) {
+    return this.request(`/v1/jobs/${encodeURIComponent(id)}/reveal`, { method: "POST", body: {} });
+  }
+
+  cancel(id) {
+    return this.request(`/v1/jobs/${encodeURIComponent(id)}`, { method: "DELETE" });
+  }
+
+  async discover() {
+    const health = await this.health();
+    if (Number(health.protocolVersion) !== PROTOCOL_VERSION) {
+      throw new EngineError(
+        `Engine protocol v${health.protocolVersion ?? "?"} · web requires v${PROTOCOL_VERSION}`,
+        { code: "PROTOCOL_MISMATCH" },
+      );
+    }
+    try {
+      await this.authCheck();
+      return { state: "ready", health };
+    } catch (error) {
+      if (error instanceof EngineError && error.code === "PAIRING_REQUIRED") {
+        return { state: "pairing", health };
+      }
+      throw error;
+    }
+  }
+}
+
+export const ENGINE_BASE_URL = DEFAULT_BASE;
+export const ENGINE_PROTOCOL_VERSION = PROTOCOL_VERSION;

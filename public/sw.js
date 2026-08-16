@@ -1,9 +1,13 @@
-const CACHE = "y2y2-shell-v1";
-const SHELL = ["/", "/styles.css", "/app.js", "/manifest.webmanifest", "/icon.svg"];
+const CACHE = "y2y2-shell-v3";
+const SHELL = ["/", "/styles.css", "/app.js", "/engine-client.js", "/manifest.webmanifest", "/icon.svg"];
 self.addEventListener("install", (event) => event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))));
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) => event.waitUntil(Promise.all([
+  self.clients.claim(),
+  caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))),
+])));
 self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
-  if (event.request.method !== "GET" || url.pathname.startsWith("/api/")) return;
+  if (url.origin !== self.location.origin) return;
   event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
