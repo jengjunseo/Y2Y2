@@ -6,12 +6,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -157,15 +158,28 @@ final class EngineStore {
 
     private void load() {
         if (!jobsFile.isFile()) return;
-        try {
-            JSONArray a = new JSONArray(Files.readString(jobsFile.toPath(), StandardCharsets.UTF_8));
+        try (FileInputStream input = new FileInputStream(jobsFile);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[16 * 1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
+            JSONArray a = new JSONArray(new String(output.toByteArray(), StandardCharsets.UTF_8));
             for (int i=0;i<a.length();i++) jobs.add(a.getJSONObject(i));
         } catch (Exception ignored) { jobs.clear(); }
     }
 
     private synchronized void save() {
         JSONArray a = new JSONArray(); for (JSONObject j : jobs) a.put(j);
-        try { Files.writeString(jobsFile.toPath(), a.toString(), StandardCharsets.UTF_8); } catch (Exception ignored) {}
+        byte[] data = a.toString().getBytes(StandardCharsets.UTF_8);
+        File temp = new File(jobsFile.getParentFile(), jobsFile.getName() + ".tmp");
+        try (FileOutputStream output = new FileOutputStream(temp)) {
+            output.write(data);
+            output.getFD().sync();
+            if (!temp.renameTo(jobsFile)) {
+                try (FileOutputStream direct = new FileOutputStream(jobsFile)) { direct.write(data); direct.getFD().sync(); }
+                temp.delete();
+            }
+        } catch (Exception ignored) { temp.delete(); }
     }
 
     private static JSONObject copy(JSONObject j) { try { return new JSONObject(j.toString()); } catch (JSONException e) { return new JSONObject(); } }
