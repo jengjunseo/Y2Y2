@@ -4,10 +4,16 @@ build/
 __pycache__/
 .pytest_cache/
 *.pyc
+*.py[cod]
 *.log
 .env
+.env.local
+.env.*.local
+.vercel/
 .DS_Store
 android/.gradle/
 android/local.properties
 android/app/build/
+android/**/build/
 engine/windows/.venv/
+engine/windows/vendor/
