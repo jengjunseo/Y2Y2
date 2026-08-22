@@ -1,0 +1,46 @@
+name: Certify Y2Y2 Production
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-web-production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exercise licensed media gateway on Production
+        env:
+          PRODUCTION_ORIGIN: https://y2-y2.vercel.app
+        run: |
+          node <<'NODE'
+          const origin = process.env.PRODUCTION_ORIGIN;
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          let health;
+          for (let i = 0; i < 60; i++) {
+            try {
+              const r = await fetch(`${origin}/api/web?action=health`, { cache: 'no-store' });
+              if (r.ok) { health = await r.json(); break; }
+            } catch {}
+            await sleep(2000);
+          }
+          if (!health?.ok) throw new Error('Production web gateway did not become healthy');
+          const inspect = await fetch(`${origin}/api/web?action=inspect`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', origin },
+            body: JSON.stringify({ url: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' })
+          });
+          const data = await inspect.json().catch(() => ({}));
+          if (!inspect.ok) throw new Error(`Live inspect failed: ${inspect.status} ${JSON.stringify(data)}`);
+          const itag = data.audioPlan?.itag ?? data.mp4Plans?.[0]?.itag ?? data.mp4Plans?.[0]?.video?.itag;
+          if (!itag) throw new Error('Live inspect returned no usable stream');
+          const stream = await fetch(`${origin}/api/web?action=stream&videoId=${data.videoId}&itag=${itag}`, {
+            headers: { origin, range: 'bytes=0-1023' }
+          });
+          if (stream.status !== 206) throw new Error(`Live range failed: ${stream.status} ${await stream.text()}`);
+          const bytes = (await stream.arrayBuffer()).byteLength;
+          if (bytes < 1 || bytes > 3500000) throw new Error(`Unexpected live range size: ${bytes}`);
+          console.log(JSON.stringify({ health, videoId: data.videoId, title: data.title, itag, bytes }));
+          NODE
