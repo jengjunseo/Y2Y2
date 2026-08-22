@@ -1,0 +1,69 @@
+name: Certify Supabase Resolver
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-ip-direct-download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve on Supabase and fetch direct media from this runner
+        env:
+          FUNCTION_URL: https://zzkrqjgcyiapjtzyovwh.supabase.co/functions/v1/y2y2-resolver-probe
+        run: |
+          node <<'NODE'
+          const endpoint = process.env.FUNCTION_URL;
+          const fixture = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+          const health = await fetch(`${endpoint}?action=health`, { cache: 'no-store' });
+          const healthData = await health.json().catch(() => ({}));
+          if (!health.ok || !healthData?.ok) throw new Error(`health failed: ${health.status} ${JSON.stringify(healthData)}`);
+
+          const resolve = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ url: fixture }),
+            signal: AbortSignal.timeout(15000)
+          });
+          const data = await resolve.json().catch(() => ({}));
+          if (!resolve.ok || !data?.ok) throw new Error(`resolve failed: ${resolve.status} ${JSON.stringify(data)}`);
+          if (!Array.isArray(data.progressive) || !data.progressive.length) throw new Error('no progressive direct formats');
+
+          const format = data.progressive.find(f => Number(f.itag) === 18) || data.progressive[0];
+          const direct = new URL(format.downloadUrl);
+          if (!(direct.protocol === 'https:' && (direct.hostname === 'googlevideo.com' || direct.hostname.endsWith('.googlevideo.com')))) {
+            throw new Error(`unexpected direct host: ${direct.hostname}`);
+          }
+
+          const media = await fetch(direct, {
+            headers: { range: 'bytes=0-1023' },
+            redirect: 'manual',
+            signal: AbortSignal.timeout(15000)
+          });
+          if (![200, 206].includes(media.status)) {
+            const text = await media.text().catch(() => '');
+            throw new Error(`cross-IP media failed: ${media.status} ${text.slice(0, 500)}`);
+          }
+          const reader = media.body?.getReader();
+          if (!reader) throw new Error('no media body');
+          const first = await reader.read();
+          await reader.cancel().catch(() => {});
+          const bytes = first.value?.byteLength || 0;
+          if (!bytes) throw new Error('no media bytes');
+
+          console.log(JSON.stringify({
+            resolver: healthData.service,
+            title: data.title,
+            client: data.resolverClient,
+            itag: format.itag,
+            height: format.height,
+            host: direct.hostname,
+            status: media.status,
+            contentRange: media.headers.get('content-range'),
+            firstChunkBytes: bytes
+          }, null, 2));
+          NODE
