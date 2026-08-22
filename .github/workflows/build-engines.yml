@@ -1,8 +1,8 @@
-name: Build Y2Y2
+name: Build Distributed Engines
 
 on:
   push:
-    branches: [main, feature/v1-web-native]
+    branches: [main, feature/v0.4-relay-queue-hybrid]
   pull_request:
   workflow_dispatch:
 
@@ -17,55 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Install web dependencies
-        run: npm install --no-audit --no-fund
-      - name: Web / Gateway checks
-        run: npm run check
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Y2Y2-Web-Native
-          path: public/v1-app.js
-          if-no-files-found: error
-
-  live-web-production:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: web
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for Production and exercise licensed media gateway
-        env:
-          PRODUCTION_ORIGIN: https://y2-y2.vercel.app
-        run: |
-          node <<'NODE'
-          const origin = process.env.PRODUCTION_ORIGIN;
-          const sleep = ms => new Promise(r => setTimeout(r, ms));
-          let health;
-          for (let i = 0; i < 60; i++) {
-            try {
-              const r = await fetch(`${origin}/api/web?action=health`, { cache: 'no-store' });
-              if (r.ok) { health = await r.json(); break; }
-            } catch {}
-            await sleep(2000);
-          }
-          if (!health?.ok) throw new Error('Vercel Production web gateway did not become healthy');
-          // Big Buck Bunny by Blender Foundation is CC BY 3.0. YouTube ID verified in public licensing metadata.
-          const inspect = await fetch(`${origin}/api/web?action=inspect`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json', origin },
-            body: JSON.stringify({ url: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' })
-          });
-          const data = await inspect.json();
-          if (!inspect.ok) throw new Error(`Live inspect failed: ${inspect.status} ${JSON.stringify(data)}`);
-          const itag = data.audioPlan?.itag ?? data.mp4Plans?.[0]?.itag ?? data.mp4Plans?.[0]?.video?.itag;
-          if (!itag) throw new Error('Live inspect returned no usable stream');
-          const stream = await fetch(`${origin}/api/web?action=stream&videoId=${data.videoId}&itag=${itag}`, {
-            headers: { origin, range: 'bytes=0-1023' }
-          });
-          if (stream.status !== 206) throw new Error(`Live range failed: ${stream.status} ${await stream.text()}`);
-          const bytes = (await stream.arrayBuffer()).byteLength;
-          if (bytes < 1 || bytes > 3500000) throw new Error(`Unexpected live range size: ${bytes}`);
-          console.log(JSON.stringify({ health, videoId: data.videoId, title: data.title, itag, bytes }));
-          NODE
+      - run: npm run check
 
   windows-engine:
     runs-on: windows-latest
@@ -120,6 +72,11 @@ jobs:
           } finally {
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
           }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Y2Y2-Engine-Windows-x64
+          path: dist/Y2Y2-Engine-Windows-x64.exe
+          if-no-files-found: error
 
   android-engine:
     runs-on: ubuntu-latest
@@ -137,3 +94,8 @@ jobs:
           gradle-version: '9.5.0'
       - name: Build debug APK
         run: gradle -p android :app:assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Y2Y2-Engine-Android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
