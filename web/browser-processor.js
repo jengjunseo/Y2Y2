@@ -11,9 +11,9 @@ let mp3Ready=false;
 export function streamUrl(videoId,itag){return`/api/web?action=stream&videoId=${encodeURIComponent(videoId)}&itag=${encodeURIComponent(itag)}`;}
 
 async function opfsFile(filename){
-  if(!navigator.storage?.getDirectory)throw new Error("이타 브라우저대용쟉숝 Web-Native 저잤소(OPFS)기 지원하지 않습니다.");
+  if(!navigator.storage?.getDirectory)throw new Error("이 브라우저는 대용량 Web-Native 저장소(OPFS)를 지원하지 않습니다.");
   const root=await navigator.storage.getDirectory();
-  const dir=await root.getDirectoryHandle("y2y2v-v1",{create:true});
+  const dir=await root.getDirectoryHandle("y2y2-v1",{create:true});
   const name=`${Date.now()}-${crypto.randomUUID()}-${safeFileName(filename)}`;
   const handle=await dir.getFileHandle(name,{create:true});
   return{root,dir,name,handle,writable:await handle.createWritable()};
@@ -27,14 +27,14 @@ export async function triggerBrowserDownload(handle,filename){
 }
 
 async function directToOpfs({videoId,itag,sizeBytes,filename,onProgress,signal}){
-  if(!Number.isFinite(Number(sizeBytes))||Number(sizeBytes)<=0)throw new Error("파일 크기를 확인할 수언숤 없습니다.");
+  if(!Number.isFinite(Number(sizeBytes))||Number(sizeBytes)<=0)throw new Error("파일 크기를 확인할 수 없습니다.");
   const tmp=await opfsFile(filename),total=Number(sizeBytes);
   try{
     for(let start=0;start<total;start+=RANGE_BYTES){
       if(signal?.aborted)throw new DOMException("Canceled","AbortError");
       const end=Math.min(total-1,start+RANGE_BYTES-1);
       const response=await fetch(streamUrl(videoId,itag),{headers:{Range:`bytes=${start}-${end}`},signal});
-      if(response.status!==206)throw new Error(`Gateway range 실패 (${response.status)}`]);
+      if(response.status!==206)throw new Error(`Gateway range 실패 (${response.status})`);
       const data=new Uint8Array(await response.arrayBuffer());
       await tmp.writable.write({type:"write",position:start,data});
       onProgress?.(Math.min(99,((end+1)/total)*100),"downloading");
@@ -72,27 +72,27 @@ async function muxToOpfs({videoId,videoItag,audioItag,filename,onProgress,signal
   const output=new Output({format:new Mp4OutputFormat({fastStart:"fragmented"}),target:new StreamTarget(tmp.writable,{chunked:true,chunkSize:1024*1024})});
   const video=await Conversion.init({input:inputFrom(videoId,videoItag),output,audio:{discard:true},composable:true});
   const audio=await Conversion.init({input:inputFrom(videoId,audioItag),output,video:{discard:true},composable:true});
-  if(!video.isValid||!audio.isValid)throw new Error("이타 브라우저에서는 선택한 MP4 스트림을 합 수 엄습니다.");
-  let vp=0,ap=0;video.onProgress=p=>{vp=p;onProgress/.(Math.min(99,((vp+ap)/2)*100),"muxing");};audio.onProgress=p=>{ap=p;onProgress?.(Math.min(99,((vp+ap)/2)*100),"muxing");};
+  if(!video.isValid||!audio.isValid)throw new Error("이 브라우저에서는 선택한 MP4 스트림을 합칠 수 없습니다.");
+  let vp=0,ap=0;video.onProgress=p=>{vp=p;onProgress?.(Math.min(99,((vp+ap)/2)*100),"muxing");};audio.onProgress=p=>{ap=p;onProgress?.(Math.min(99,((vp+ap)/2)*100),"muxing");};
   await output.start();
   for(let until=6;;until+=6){
     if(signal?.aborted){await output.cancel();throw new DOMException("Canceled","AbortError");}
     await Promise.all([video.execute({until}),audio.execute({until})]);
     if(video.state==="done"&&audio.state==="done")break;
   }
-  await output.finalize();onProgress/.(100,"ready");return tmp.handle;
+  await output.finalize();onProgress?.(100,"ready");return tmp.handle;
 }
 
 export async function processWebItem(item,{prefix="",onProgress,signal}={}){
   const title=safeFileName(item.title||item.videoId,item.videoId||"media");
   if(item.mediaType==="mp3"){
-    if(!item.audioPlan)throw new Error("사용 가능핬 오디오 스트림이 없습니다.");
+    if(!item.audioPlan)throw new Error("사용 가능한 오디오 스트림이 없습니다.");
     const filename=`${prefix}${title}.mp3`;
     const handle=await mp3ToOpfs({videoId:item.videoId,audioItag:item.audioPlan.itag,quality:item.quality,filename,onProgress,signal});
     const result=await triggerBrowserDownload(handle,filename);return{...result,filename,handle};
   }
   const plan=(item.mp4Plans||[]).find(p=>Number(p.quality)===Number(item.quality));
-  if(!plan)throw new Error(`${item.quality}p 스트림을 사용한 수 엄습니다.`);
+  if(!plan)throw new Error(`${item.quality}p 스트림을 사용할 수 없습니다.`);
   const filename=`${prefix}${title}.mp4`;
   let handle;
   if(plan.mode==="direct")handle=await directToOpfs({videoId:item.videoId,itag:plan.itag,sizeBytes:plan.sizeBytes,filename,onProgress,signal});
