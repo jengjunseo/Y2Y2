@@ -2,7 +2,7 @@
   "name":"y2y2","version":"1.0.0-beta.1","private":true,"type":"module","engines":{"node":"24.x"},
   "scripts":{
     "build":"esbuild web/v1-app.js --bundle --format=esm --platform=browser --target=es2022 --minify --outfile=public/v1-app.js",
-    "check:web":"node --check web/v1-core.js && node --check api/web.js && node --test tests/web-native.test.js && npm run build",
+    "check:web":"node --check web/v1-core.js && node --check api/web.js && node --check web/browser-processor.js && node --check web/v1-app.js && node --test tests/web-native.test.js && npm run build",
     "check:relay":"node --check relay/core.js && node --check api/_relay.js && node --check api/_relay-workflow.js && node --check api/relay.js && node --test tests/relay.test.js",
     "check":"npm run check:web && npm run check:relay"
   },

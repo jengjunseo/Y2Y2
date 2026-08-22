@@ -97,7 +97,7 @@ export function buildMediaPlans(formats){
 export function isSameOriginBrowserRequest(request){
   const own=new URL(request.url).origin;
   const origin=request.headers.get("origin");
-  if(origin&&origin!==own)return false;
+  if(origin)return origin===own;
   const site=request.headers.get("sec-fetch-site");
-  return !site||site==="same-origin"||site==="none";
+  return site==="same-origin";
 }
