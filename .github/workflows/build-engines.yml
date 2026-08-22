@@ -27,27 +27,27 @@ jobs:
           path: public/v1-app.js
           if-no-files-found: error
 
-  live-web-preview:
-    if: github.event_name == 'pull_request'
+  live-web-production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: web
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for Preview and exercise licensed media gateway
+      - name: Wait for Production and exercise licensed media gateway
         env:
-          PREVIEW_ORIGIN: https://y2-y2-git-feature-v1-web-native-wondaes-projects-fe5c826b.vercel.app
+          PRODUCTION_ORIGIN: https://y2-y2.vercel.app
         run: |
           node <<'NODE'
-          const origin = process.env.PREVIEW_ORIGIN;
+          const origin = process.env.PRODUCTION_ORIGIN;
           const sleep = ms => new Promise(r => setTimeout(r, ms));
           let health;
-          for (let i = 0; i < 45; i++) {
+          for (let i = 0; i < 60; i++) {
             try {
               const r = await fetch(`${origin}/api/web?action=health`, { cache: 'no-store' });
               if (r.ok) { health = await r.json(); break; }
             } catch {}
             await sleep(2000);
           }
-          if (!health?.ok) throw new Error('Vercel Preview web gateway did not become healthy');
+          if (!health?.ok) throw new Error('Vercel Production web gateway did not become healthy');
           // Big Buck Bunny by Blender Foundation is CC BY 3.0. YouTube ID verified in public licensing metadata.
           const inspect = await fetch(`${origin}/api/web?action=inspect`, {
             method: 'POST',
