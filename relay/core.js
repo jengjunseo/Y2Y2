@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 export const RELAY_TTL_MS = 60 * 60 * 1000;
-export const PRESENCE_TTL_SECONDS = 25;
+export const PRESENCE_TTL_SECONDS = 50;
 export const MINUTE_CREATE_LIMIT = 30;
 export const DAILY_ITEM_LIMIT = 1000;
 

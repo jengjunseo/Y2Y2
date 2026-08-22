@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  DAILY_ITEM_LIMIT, MINUTE_CREATE_LIMIT, RELAY_TTL_MS,
+  DAILY_ITEM_LIMIT, MINUTE_CREATE_LIMIT, PRESENCE_TTL_SECONDS, RELAY_TTL_MS,
   expireArtifact, expiresAtFrom, homePresence, safeBlobName,
   signSession, verifySession,
 } from "../relay/core.js";
@@ -16,8 +16,9 @@ test("owner session is signed, rejects wrong secret, and expires", () => {
 
 test("home presence fails closed after its TTL", () => {
   const lastSeen = 1_000_000;
-  assert.equal(homePresence(lastSeen, lastSeen + 24_000).state, "online");
-  assert.equal(homePresence(lastSeen, lastSeen + 26_000).state, "offline");
+  assert.equal(PRESENCE_TTL_SECONDS, 50);
+  assert.equal(homePresence(lastSeen, lastSeen + 49_000).state, "online");
+  assert.equal(homePresence(lastSeen, lastSeen + 51_000).state, "offline");
   assert.equal(homePresence(0, lastSeen).state, "offline");
 });
 
@@ -57,4 +58,10 @@ test("rate limit defaults are finite and conservative", () => {
   assert.equal(MINUTE_CREATE_LIMIT, 30);
   assert.equal(DAILY_ITEM_LIMIT, 1000);
   assert.ok(MINUTE_CREATE_LIMIT < DAILY_ITEM_LIMIT);
+});
+
+test("idle presence budget leaves headroom for a free relay", () => {
+  const pollsPer30Days = (30 * 24 * 60 * 60) / 20;
+  const minimumRedisCommandsPerPoll = 3;
+  assert.ok(pollsPer30Days * minimumRedisCommandsPerPoll < 500_000);
 });

@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-import json
 import urllib.parse
 from http import HTTPStatus
 
+import relay_agent
 import y2y2_engine as base
 from relay_agent import RelayAgent
 
 APP_VERSION = "0.4.0"
+# Idle polling is deliberately slower than active polling so an always-on Home
+# Engine stays within the selected free Redis budget. Active jobs still use 5s.
+relay_agent.POLL_IDLE_SECONDS = 20.0
 RELAY = RelayAgent(base.APP, base.app_data_dir())
 
 
