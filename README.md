@@ -39,10 +39,12 @@ The user does not pick Local versus Remote for each job.
 
 - Vercel Functions expose only owner/device authentication, job state, signed artifact URLs and routing metadata.
 - Upstash Redis stores Home Engine registration, presence, jobs, leases and queue state.
-- Windows Home Engine polls outbound over HTTPS: 10 seconds idle, 5 seconds while it has active remote work, with timeout and bounded exponential backoff.
+- The Windows v0.4 Home Engine entrypoint polls outbound over HTTPS every 20 seconds while idle and every 5 seconds while it has active remote work, with timeout and bounded exponential backoff. Presence expires after 50 seconds.
 - Remote `inspect` is also executed by Home Engine so title and available qualities come from the same device-side media engine.
 - Completed remote media is uploaded **directly from Home Engine to Vercel Private Blob** using a short-lived signed PUT. Media bytes do not pass through a Vercel Function.
 - A remote browser gets a short-lived signed GET only while the logical artifact TTL is valid.
+
+The 20-second idle poll is deliberate. One idle poll currently costs at least three Redis operations (device authentication, presence refresh and queue claim), keeping the 30-day always-on idle baseline below 500,000 Redis commands before active-job traffic.
 
 ## Temporary result lifetime
 
@@ -81,8 +83,8 @@ The Local Engine path works without Relay configuration. Home Engine functionali
 
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
-- `Y2Y2_RELAY_OWNER_SECRET`
-- a Vercel Private Blob store available to the project / Blob credentials supplied by Vercel
+- `Y2Y2_RELAY_OWNER_SECRET` (at least 32 characters)
+- `BLOB_READ_WRITE_TOKEN`, normally injected by connecting a Vercel **Private Blob** store to the project
 - Vercel Workflow support for the cleanup workflow
 
 Optional:
@@ -91,7 +93,7 @@ Optional:
 - `Y2Y2_RELAY_ITEMS_PER_DAY` — defaults to 1000
 - `Y2Y2_RELAY_TTL_MS` — defaults to 3600000; production should normally keep the one-hour contract
 
-If the required Relay state configuration is missing or invalid, Relay reports an explicit unavailable state and the v0.3 Local Engine flow remains usable.
+If any required Relay configuration is missing or invalid, Relay reports an explicit unavailable state and the v0.3 Local Engine flow remains usable. A partially configured Relay never accepts remote work as if it were healthy.
 
 ## Features
 
