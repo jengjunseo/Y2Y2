@@ -2,7 +2,7 @@ name: Build Distributed Engines
 
 on:
   push:
-    branches: [main, feat/distributed-engine-v03]
+    branches: [main, feature/v0.4-relay-queue-hybrid]
   pull_request:
   workflow_dispatch:
 
@@ -36,16 +36,18 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://github.com/denoland/deno/releases/download/v2.8.1/deno-x86_64-pc-windows-msvc.zip" -OutFile deno.zip
-          Expand-Archive deno.zip -DestinationPath engine/windows/vendor
+          New-Item -ItemType Directory -Force -Path engine/windows/vendor | Out-Null
+          Expand-Archive deno.zip -DestinationPath engine/windows/vendor -Force
           engine/windows/vendor/deno.exe --version
       - name: Build portable engine
         shell: pwsh
         run: |
           pyinstaller --clean --onefile --name Y2Y2-Engine-Windows-x64 `
+            --paths "engine/windows" `
             --add-binary "engine/windows/vendor/deno.exe;." `
             --collect-all yt_dlp --collect-all yt_dlp_ejs --collect-all imageio_ffmpeg `
-            engine/windows/y2y2_engine.py
-      - name: Portable engine protocol smoke
+            engine/windows/y2y2_engine_v04.py
+      - name: Portable engine protocol regression smoke
         shell: pwsh
         run: |
           $env:Y2Y2_APP_DATA_DIR = "$env:RUNNER_TEMP\y2y2-data"
