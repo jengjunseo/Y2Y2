@@ -23,6 +23,7 @@ export function safeFileName(name, fallback='video') {
   const cleaned = String(name || fallback)
     .replace(/[<>:"/\\|?*\u0000-\u001f]/g, ' ')
     .replace(/\s+/g, ' ')
+    .replace(/^[. ]+/g, '')
     .replace(/[. ]+$/g, '')
     .trim();
   return (cleaned || fallback).slice(0, 140);
