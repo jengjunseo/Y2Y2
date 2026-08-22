@@ -12,7 +12,7 @@ jobs:
   cross-ip-direct-download:
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve on Vercel and fetch direct media from this runner
+      - name: Resolve on Vercel Edge and fetch direct media from this runner
         env:
           PRODUCTION_ORIGIN: https://y2-y2.vercel.app
         run: |
@@ -20,23 +20,23 @@ jobs:
           const origin = process.env.PRODUCTION_ORIGIN;
           const fixture = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ'; // Big Buck Bunny, CC BY 3.0
 
-          const health = await fetch(`${origin}/api/direct?action=health`, { cache: 'no-store' });
+          const health = await fetch(`${origin}/api/direct-edge?action=health`, { cache: 'no-store' });
           const healthData = await health.json().catch(() => ({}));
-          if (!health.ok || !healthData?.ok) {
-            throw new Error(`Direct resolver health failed: ${health.status} ${JSON.stringify(healthData)}`);
+          if (!health.ok || !healthData?.ok || healthData.runtime !== 'edge') {
+            throw new Error(`Edge resolver health failed: ${health.status} ${JSON.stringify(healthData)}`);
           }
 
-          const resolve = await fetch(`${origin}/api/direct`, {
+          const resolve = await fetch(`${origin}/api/direct-edge`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ url: fixture })
           });
           const data = await resolve.json().catch(() => ({}));
           if (!resolve.ok || !data?.ok) {
-            throw new Error(`Production resolve failed: ${resolve.status} ${JSON.stringify(data)}`);
+            throw new Error(`Production Edge resolve failed: ${resolve.status} ${JSON.stringify(data)}`);
           }
           if (!Array.isArray(data.progressive) || !data.progressive.length) {
-            throw new Error('Resolver returned no progressive direct formats');
+            throw new Error('Edge resolver returned no progressive direct formats');
           }
 
           const format = data.progressive.find(f => Number(f.itag) === 18) || data.progressive[0];
