@@ -44,8 +44,11 @@ async function playerRequest(profile, videoId) {
   const timer = setTimeout(() => controller.abort(), 9000);
   try {
     const response = await fetch(endpoint, {
-      method: 'POST', headers, body: JSON.stringify(body), redirect: 'error', signal: controller.signal
+      method: 'POST', headers, body: JSON.stringify(body), redirect: 'manual', signal: controller.signal
     });
+    if (response.status >= 300 && response.status < 400) {
+      throw new Error(`Unexpected upstream redirect ${response.status}`);
+    }
     const data = await response.json().catch(() => ({}));
     return { response, data };
   } finally { clearTimeout(timer); }
