@@ -5,7 +5,7 @@
   "type": "module",
   "engines": { "node": "24.x" },
   "scripts": {
-    "check:web": "node --check public/engine-client.js && node --check public/relay-client.js && node --check public/app.js && node --check public/sw.js",
+    "check:web": "node --check public/engine-client.js && node --check public/relay-client.js && node --check public/app.js && node --check public/sw.js && node --check public/web-helper.js",
     "check:relay": "node --check relay/core.js && node --check api/_relay.js && node --check api/_relay-workflow.js && node --check api/relay.js && node --test tests/relay.test.js",
     "check": "npm run check:web && npm run check:relay"
   },
