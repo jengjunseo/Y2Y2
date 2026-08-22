@@ -1,0 +1,79 @@
+name: Certify Y2Y2 Direct Production
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-ip-direct-download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve on Vercel and fetch direct media from this runner
+        env:
+          PRODUCTION_ORIGIN: https://y2-y2.vercel.app
+        run: |
+          node <<'NODE'
+          const origin = process.env.PRODUCTION_ORIGIN;
+          const fixture = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ'; // Big Buck Bunny, CC BY 3.0
+
+          const health = await fetch(`${origin}/api/direct?action=health`, { cache: 'no-store' });
+          const healthData = await health.json().catch(() => ({}));
+          if (!health.ok || !healthData?.ok) {
+            throw new Error(`Direct resolver health failed: ${health.status} ${JSON.stringify(healthData)}`);
+          }
+
+          const resolve = await fetch(`${origin}/api/direct`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ url: fixture })
+          });
+          const data = await resolve.json().catch(() => ({}));
+          if (!resolve.ok || !data?.ok) {
+            throw new Error(`Production resolve failed: ${resolve.status} ${JSON.stringify(data)}`);
+          }
+          if (!Array.isArray(data.progressive) || !data.progressive.length) {
+            throw new Error('Resolver returned no progressive direct formats');
+          }
+
+          const format = data.progressive.find(f => Number(f.itag) === 18) || data.progressive[0];
+          const direct = new URL(format.downloadUrl);
+          if (!(direct.protocol === 'https:' && (direct.hostname === 'googlevideo.com' || direct.hostname.endsWith('.googlevideo.com')))) {
+            throw new Error(`Unexpected direct host: ${direct.hostname}`);
+          }
+
+          const media = await fetch(direct, {
+            headers: { range: 'bytes=0-1023' },
+            redirect: 'manual',
+            signal: AbortSignal.timeout(15000)
+          });
+          if (![200, 206].includes(media.status)) {
+            const text = await media.text().catch(() => '');
+            throw new Error(`Cross-IP GoogleVideo fetch failed: ${media.status} ${text.slice(0, 500)}`);
+          }
+          const reader = media.body?.getReader();
+          if (!reader) throw new Error('GoogleVideo response had no readable body');
+          const first = await reader.read();
+          await reader.cancel().catch(() => {});
+          const bytes = first.value?.byteLength || 0;
+          if (bytes < 1) throw new Error('GoogleVideo returned no media bytes');
+
+          console.log(JSON.stringify({
+            health: healthData,
+            videoId: data.videoId,
+            title: data.title,
+            resolverClient: data.resolverClient,
+            itag: format.itag,
+            height: format.height,
+            ipBound: format.ipBound,
+            urlClient: format.client,
+            googleVideoHost: direct.hostname,
+            directStatus: media.status,
+            contentRange: media.headers.get('content-range'),
+            contentDisposition: media.headers.get('content-disposition'),
+            firstChunkBytes: bytes
+          }, null, 2));
+          NODE
