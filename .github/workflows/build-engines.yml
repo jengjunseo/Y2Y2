@@ -1,8 +1,8 @@
-name: Build Distributed Engines
+name: Build Y2Y2
 
 on:
   push:
-    branches: [main, feature/v0.4-relay-queue-hybrid]
+    branches: [main, feature/v1-web-native]
   pull_request:
   workflow_dispatch:
 
@@ -17,7 +17,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm run check
+          cache: npm
+      - name: Install web dependencies
+        run: npm install --no-audit --no-fund
+      - name: Web / Gateway checks
+        run: npm run check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Y2Y2-Web-Native
+          path: public/v1-app.js
+          if-no-files-found: error
 
   windows-engine:
     runs-on: windows-latest
@@ -72,11 +81,6 @@ jobs:
           } finally {
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
           }
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Y2Y2-Engine-Windows-x64
-          path: dist/Y2Y2-Engine-Windows-x64.exe
-          if-no-files-found: error
 
   android-engine:
     runs-on: ubuntu-latest
@@ -94,8 +98,3 @@ jobs:
           gradle-version: '9.5.0'
       - name: Build debug APK
         run: gradle -p android :app:assembleDebug --stacktrace
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Y2Y2-Engine-Android-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error

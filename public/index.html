@@ -1,72 +1,29 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0a0b" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="description" content="Y2Y2 relay queue hybrid media engine" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="/relay.css" />
-    <title>Y2Y2</title>
-  </head>
-  <body>
-    <main class="shell">
-      <header class="hero">
-        <div class="brand-row"><div class="brand-mark">Y2</div><div><h1>Y2Y2</h1><p>Paste. Queue. Route automatically.</p></div></div>
-        <div id="health" class="health">ENGINE · CHECKING</div>
-      </header>
-
-      <section id="engine-panel" class="engine-panel panel">
-        <div class="engine-main">
-          <span class="eyebrow">HYBRID ENGINE</span>
-          <div class="engine-title-row"><strong id="engine-name">사용 가능한 Engine을 찾는 중…</strong><span id="engine-badge" class="engine-badge">checking</span></div>
-          <p id="engine-detail" class="muted">같은 기기의 Local Engine을 먼저 찾고, 없으면 등록된 Home Engine을 확인합니다.</p>
-        </div>
-        <div id="pair-box" class="pair-box hidden">
-          <label for="pair-code">Engine 화면의 6자리 연결 코드</label>
-          <div class="pair-row"><input id="pair-code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" /><button id="pair-button" class="button secondary">연결</button></div>
-        </div>
-        <div id="relay-auth-box" class="pair-box hidden">
-          <label for="relay-owner-secret">Relay Owner Secret · 이 브라우저에서 한 번 인증</label>
-          <div class="pair-row"><input id="relay-owner-secret" type="password" placeholder="Owner Secret" autocomplete="current-password" /><button id="relay-login-button" class="button secondary">Relay 인증</button></div>
-        </div>
-        <div id="home-register-box" class="home-register hidden">
-          <div><strong>Home Engine</strong><span id="home-register-detail" class="muted">이 PC를 등록하면 외부에서는 자동으로 이 PC에 작업을 보냅니다.</span></div>
-          <button id="register-home-button" class="button secondary">이 PC를 Home Engine으로 등록</button>
-        </div>
-        <div id="engine-actions" class="engine-actions hidden">
-          <a id="open-engine" class="chip action-link" href="http://127.0.0.1:49272/" target="_blank" rel="noopener">Engine 열기</a>
-          <a class="chip action-link" href="https://github.com/jengjunseo/Y2Y2/actions/workflows/build-engines.yml" target="_blank" rel="noopener">Windows / Android 설치 파일</a>
-          <button id="retry-engine" class="chip">다시 확인</button>
-        </div>
-      </section>
-
-      <section class="composer panel">
-        <label for="url-input">YouTube 링크</label>
-        <div class="input-row"><textarea id="url-input" rows="1" placeholder="링크를 붙여넣고 Enter · 여러 줄도 가능" autocomplete="off"></textarea><button id="add-button" class="button secondary">추가</button></div>
-        <div class="composer-footer"><span>본인이 다운로드 권한을 가진 콘텐츠에 사용하세요.</span><button id="paste-button" class="text-button">클립보드 붙여넣기</button></div>
-      </section>
-
-      <section class="queue-section">
-        <div class="section-title-row"><div><span class="eyebrow">QUEUE</span><h2><span id="queue-count">0</span> items</h2></div><div class="bulk-tools"><button class="chip" data-bulk="mp3">전체 MP3 · 256k</button><button class="chip" data-bulk="mp4">전체 MP4 · 1080p</button></div></div>
-        <div id="empty-state" class="empty panel"><strong>링크를 담아봐.</strong><span>Y2Y2가 Local Engine → Home Engine 순서로 알아서 라우팅합니다.</span></div>
-        <div id="queue" class="queue"></div>
-        <div id="batch-bar" class="batch-bar panel hidden">
-          <div class="batch-meta"><div><strong id="batch-summary">0개</strong><span id="batch-detail">준비 전</span></div><label class="toggle"><input id="number-prefix" type="checkbox" checked /> <span>파일명 앞에 순서 번호</span></label></div>
-          <div id="batch-progress-wrap" class="progress-wrap hidden"><div id="batch-progress" class="progress"></div></div>
-          <button id="batch-button" class="button primary">모두 다운로드</button><button id="retry-button" class="button secondary hidden">실패 항목 다시 시도</button>
-        </div>
-      </section>
-
-      <section class="history-section">
-        <div class="section-title-row"><div><span class="eyebrow">ACTIVE ROUTE</span><h2>최근 작업</h2></div><button id="refresh-history" class="text-button">새로고침</button></div>
-        <div id="history" class="history panel"><span class="muted">Engine 연결 후 표시됩니다.</span></div>
-      </section>
-    </main>
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="/app.js"></script>
-  </body>
-</html>
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0b"><meta name="color-scheme" content="dark">
+  <meta name="description" content="Y2Y2 Web-Native YouTube media downloader for content you are authorized to download">
+  <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css">
+  <title>Y2Y2</title>
+</head>
+<body>
+<main class="shell">
+  <header class="hero"><div class="brand-row"><div class="brand-mark">Y2</div><div><h1>Y2Y2</h1><p>Paste. Queue. Download. No engine.</p></div></div><div id="health" class="health">WEB · CHECKING</div></header>
+  <section class="engine-panel panel">
+    <div class="engine-main"><span class="eyebrow">WEB-NATIVE</span><div class="engine-title-row"><strong id="engine-name">Web Gateway 확인 중…</strong><span id="engine-badge" class="engine-badge">checking</span></div><p id="engine-detail" class="muted">설치 없이 현재 브라우저에서 미디어를 처리합니다.</p></div>
+  </section>
+  <section class="composer panel">
+    <label for="url-input">YouTube 링크</label><div class="input-row"><textarea id="url-input" rows="1" placeholder="링크를 붙여넣고 Enter · 여러 줄도 가능" autocomplete="off"></textarea><button id="add-button" class="button secondary">추가</button></div>
+    <div class="composer-footer"><span>본인이 다운로드 권한을 가진 콘텐츠에 사용하세요. 처리 중에는 이 페이지를 열어두세요.</span><button id="paste-button" class="text-button">클립보드 붙여넣기</button></div>
+  </section>
+  <section class="queue-section">
+    <div class="section-title-row"><div><span class="eyebrow">QUEUE</span><h2><span id="queue-count">0</span> items</h2></div><div class="bulk-tools"><button class="chip" data-bulk="mp3">전체 MP3 · 256k</button><button class="chip" data-bulk="mp4">전체 MP4 · 1080p</button></div></div>
+    <div id="empty-state" class="empty panel"><strong>링크를 담아봐.</strong><span>Y2Y2가 Gateway에서 스트림만 받아 브라우저에서 직접 파일을 완성합니다.</span></div><div id="queue" class="queue"></div>
+    <div id="batch-bar" class="batch-bar panel hidden"><div class="batch-meta"><div><strong id="batch-summary">0개</strong><span id="batch-detail">준비 전</span></div><label class="toggle"><input id="number-prefix" type="checkbox" checked> <span>파일명 앞에 순서 번호</span></label></div><div id="batch-progress-wrap" class="progress-wrap hidden"><div id="batch-progress" class="progress"></div></div><button id="batch-button" class="button primary">와다다 다운로드</button><button id="retry-button" class="button secondary hidden">실패 항목 다시 시도</button></div>
+  </section>
+  <section class="history-section"><div class="section-title-row"><div><span class="eyebrow">LOCAL HISTORY</span><h2>최근 작업</h2></div><button id="refresh-history" class="text-button">새로고침</button></div><div id="history" class="history panel"><span class="muted">아직 완료한 파일이 없습니다.</span></div></section>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="/v1-app.js"></script>
+</body></html>
