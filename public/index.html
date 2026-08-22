@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0b" />
     <meta name="color-scheme" content="dark" />
-    <meta name="description" content="Y2Y2 relay queue hybrid media engine" />
+    <meta name="description" content="Y2Y2 browser-first media downloader with optional local engine fallback" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
@@ -67,6 +67,7 @@
       </section>
     </main>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="/web-helper.js"></script>
+    <script type="module">if (!window.__Y2Y2_HELPER_MODE__) import('/app.js');</script>
   </body>
 </html>
