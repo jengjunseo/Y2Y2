@@ -19,7 +19,7 @@
     </header>
 
     <section class="verdict panel">
-      <div><span class="eyebrow">CURRENT VERDICT</span><h2>Pure Web Full Y2Y2 <b>불가능</b></h2><p>일반 웹 origin은 Innertube player 응답과 GoogleVideo/SABR 바이트를 모두 읽을 수 있는 지속 가능한 공개 경로가 없습니다.</p></div>
+      <div><span class="eyebrow">CURRENT VERDICT</span><h2>원본 추출은 <b>불가능</b> · Web DVR은 조건부 가능</h2><p>일반 웹 origin은 Innertube/GoogleVideo 바이트를 지속적으로 읽을 수 없지만, 데스크톱 Chrome의 사용자 승인 탭 캡처는 별개의 렌더링 경로입니다. <a href="/dvr/" style="color:#86b7ff">Local Web DVR PoC 열기 →</a></p></div>
       <div class="verdict-level"><span>현재 증명</span><strong id="highest-level">L0</strong><small>이 브라우저에서 다시 측정 전</small></div>
     </section>
 
@@ -91,7 +91,8 @@
         <tr><td>Kira + googlevideo</td><td>L7</td><td><span class="status partial">PARTIAL</span></td><td>확장(ytc-bridge) 또는 별도 proxy 필요</td></tr>
         <tr><td>Official iframe</td><td>재생만</td><td><span class="status partial">PARTIAL</span></td><td>SOP; 공개 API에 media URL/bytes 없음</td></tr>
         <tr><td>no-cors / Service Worker cache</td><td>L0</td><td><span class="status fail">FAIL</span></td><td>opaque body·headers·status 비노출</td></tr>
-        <tr><td>Cross-origin media capture/WebAudio</td><td>L0</td><td><span class="status fail">FAIL</span></td><td>origin 보호: muted/silence/tainted canvas</td></tr>
+        <tr><td>iframe.captureStream / WebAudio</td><td>L0</td><td><span class="status fail">FAIL</span></td><td>origin 보호: 직접 media/canvas/audio 접근 불가</td></tr>
+        <tr><td>User-approved self-tab Element Capture DVR</td><td>재인코딩 파일</td><td><span class="status pass">POC</span></td><td>Desktop Chrome 132+; 실시간·매회 승인·탭 전체 오디오</td></tr>
         <tr><td>Cobalt</td><td>L7+</td><td><span class="status partial">SERVER</span></td><td>서버 resolver + media proxy + ffmpeg</td></tr>
       </tbody></table></div>
     </section>
@@ -104,3 +105,4 @@
   <script type="module" src="/lab/lab.js"></script>
 </body>
 </html>
+
