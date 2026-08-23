@@ -1,73 +1,74 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0a0b" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="description" content="Y2Y2 browser-first media downloader with optional local engine fallback" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="/relay.css" />
-    <title>Y2Y2</title>
-  </head>
-  <body>
-    <main class="shell">
-      <header class="hero">
-        <div class="brand-row"><div class="brand-mark">Y2</div><div><h1>Y2Y2</h1><p>Paste. Queue. Route automatically.</p></div></div>
-        <div id="health" class="health">ENGINE · CHECKING</div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Y2Y2 Pure Web — browser-only YouTube stream resolver experiment" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+  <title>Y2Y2 · Pure Web</title>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">Y2</div><div><h1>Y2Y2</h1><p>PURE WEB EXPERIMENT</p></div></div>
+      <span id="web-badge" class="badge good">WEB ONLY</span>
+    </header>
 
-      <section id="engine-panel" class="engine-panel panel">
-        <div class="engine-main">
-          <span class="eyebrow">HYBRID ENGINE</span>
-          <div class="engine-title-row"><strong id="engine-name">사용 가능한 Engine을 찾는 중…</strong><span id="engine-badge" class="engine-badge">checking</span></div>
-          <p id="engine-detail" class="muted">같은 기기의 Local Engine을 먼저 찾고, 없으면 등록된 Home Engine을 확인합니다.</p>
-        </div>
-        <div id="pair-box" class="pair-box hidden">
-          <label for="pair-code">Engine 화면의 6자리 연결 코드</label>
-          <div class="pair-row"><input id="pair-code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" /><button id="pair-button" class="button secondary">연결</button></div>
-        </div>
-        <div id="relay-auth-box" class="pair-box hidden">
-          <label for="relay-owner-secret">Relay Owner Secret · 이 브라우저에서 한 번 인증</label>
-          <div class="pair-row"><input id="relay-owner-secret" type="password" placeholder="Owner Secret" autocomplete="current-password" /><button id="relay-login-button" class="button secondary">Relay 인증</button></div>
-        </div>
-        <div id="home-register-box" class="home-register hidden">
-          <div><strong>Home Engine</strong><span id="home-register-detail" class="muted">이 PC를 등록하면 외부에서는 자동으로 이 PC에 작업을 보냅니다.</span></div>
-          <button id="register-home-button" class="button secondary">이 PC를 Home Engine으로 등록</button>
-        </div>
-        <div id="engine-actions" class="engine-actions hidden">
-          <a id="open-engine" class="chip action-link" href="http://127.0.0.1:49272/" target="_blank" rel="noopener">Engine 열기</a>
-          <a class="chip action-link" href="https://github.com/jengjunseo/Y2Y2/actions/workflows/build-engines.yml" target="_blank" rel="noopener">Windows / Android 설치 파일</a>
-          <button id="retry-engine" class="chip">다시 확인</button>
-        </div>
-      </section>
+    <section class="hero panel">
+      <div>
+        <span class="eyebrow">NO ENGINE · NO EXTENSION · NO SERVER RESOLVER</span>
+        <h2>링크 하나로, 브라우저만 써본다.</h2>
+        <p>Y2Y2가 이 브라우저에서 직접 YouTube player endpoint를 호출하고, 실제로 받은 스트림만 표시합니다.</p>
+      </div>
+      <div class="facts">
+        <span>사용자 네트워크</span><span>클라이언트 직접 resolve</span><span>실시간 CORS probe</span>
+      </div>
+    </section>
 
-      <section class="composer panel">
-        <label for="url-input">YouTube 링크</label>
-        <div class="input-row"><textarea id="url-input" rows="1" placeholder="링크를 붙여넣고 Enter · 여러 줄도 가능" autocomplete="off"></textarea><button id="add-button" class="button secondary">추가</button></div>
-        <div class="composer-footer"><span>본인이 다운로드 권한을 가진 콘텐츠에 사용하세요.</span><button id="paste-button" class="text-button">클립보드 붙여넣기</button></div>
-      </section>
+    <section class="composer panel">
+      <label for="url-input">YouTube 링크</label>
+      <div class="input-row">
+        <input id="url-input" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…" />
+        <button id="resolve-button" class="button primary">분석</button>
+      </div>
+      <div class="composer-footer">
+        <span>본인이 다운로드할 권한이 있는 콘텐츠에만 사용하세요.</span>
+        <button id="paste-button" class="text-button" type="button">붙여넣기</button>
+      </div>
+    </section>
 
-      <section class="queue-section">
-        <div class="section-title-row"><div><span class="eyebrow">QUEUE</span><h2><span id="queue-count">0</span> items</h2></div><div class="bulk-tools"><button class="chip" data-bulk="mp3">전체 MP3 · 256k</button><button class="chip" data-bulk="mp4">전체 MP4 · 1080p</button></div></div>
-        <div id="empty-state" class="empty panel"><strong>링크를 담아봐.</strong><span>Y2Y2가 Local Engine → Home Engine 순서로 알아서 라우팅합니다.</span></div>
-        <div id="queue" class="queue"></div>
-        <div id="batch-bar" class="batch-bar panel hidden">
-          <div class="batch-meta"><div><strong id="batch-summary">0개</strong><span id="batch-detail">준비 전</span></div><label class="toggle"><input id="number-prefix" type="checkbox" checked /> <span>파일명 앞에 순서 번호</span></label></div>
-          <div id="batch-progress-wrap" class="progress-wrap hidden"><div id="batch-progress" class="progress"></div></div>
-          <button id="batch-button" class="button primary">모두 다운로드</button><button id="retry-button" class="button secondary hidden">실패 항목 다시 시도</button>
+    <section id="status-card" class="status-card panel hidden">
+      <div class="status-head"><span class="eyebrow">RESOLVER</span><span id="resolver-state" class="badge">WAITING</span></div>
+      <div id="status-log" class="status-log"></div>
+    </section>
+
+    <section id="result" class="result hidden">
+      <article class="video-card panel">
+        <img id="thumbnail" alt="" />
+        <div class="video-meta">
+          <span class="eyebrow">VIDEO</span>
+          <h2 id="video-title"></h2>
+          <p id="video-subtitle"></p>
         </div>
-      </section>
+      </article>
 
-      <section class="history-section">
-        <div class="section-title-row"><div><span class="eyebrow">ACTIVE ROUTE</span><h2>최근 작업</h2></div><button id="refresh-history" class="text-button">새로고침</button></div>
-        <div id="history" class="history panel"><span class="muted">Engine 연결 후 표시됩니다.</span></div>
-      </section>
-    </main>
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="/web-helper.js"></script>
-    <script type="module">if (!window.__Y2Y2_HELPER_MODE__) import('/app.js');</script>
-  </body>
+      <div class="section-title"><div><span class="eyebrow">ONE FILE</span><h2>바로 받을 수 있는 MP4</h2></div><span class="muted">video + audio 포함</span></div>
+      <div id="progressive-list" class="format-list"></div>
+
+      <div class="section-title"><div><span class="eyebrow">ADAPTIVE</span><h2>고화질 / 오디오 실험실</h2></div><span class="muted">브라우저 CORS를 실제 검사</span></div>
+      <div id="adaptive-list" class="format-list"></div>
+    </section>
+
+    <section class="notes panel">
+      <span class="eyebrow">WHAT THIS BUILD PROVES</span>
+      <p>분석 성공 = 순수 웹 resolver가 실제 브라우저에서 살아 있음. MP4 직접 열기 성공 = signed media URL도 살아 있음. CORS probe 성공 = 향후 브라우저 내 MP3/mux까지 확장 가능.</p>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
 </html>
