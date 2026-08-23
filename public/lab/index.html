@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Y2Y2 Pure Web browser capability and network diagnostics lab" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/lab/lab.css" />
+  <title>Y2Y2 · Pure Web Lab</title>
+</head>
+<body>
+  <main class="lab-shell">
+    <header class="lab-header">
+      <a class="brand" href="/" aria-label="Y2Y2 홈"><span>Y2</span><strong>Y2Y2</strong></a>
+      <div class="header-copy"><span class="eyebrow">PURE WEB · AUG 2026</span><h1>브라우저 경계 실험실</h1><p>결과를 추측하지 않고, 이 기기와 네트워크에서 직접 측정합니다.</p></div>
+      <button id="export-button" class="button ghost" type="button">결과 내보내기</button>
+    </header>
+
+    <section class="verdict panel">
+      <div><span class="eyebrow">CURRENT VERDICT</span><h2>Pure Web Full Y2Y2 <b>불가능</b></h2><p>일반 웹 origin은 Innertube player 응답과 GoogleVideo/SABR 바이트를 모두 읽을 수 있는 지속 가능한 공개 경로가 없습니다.</p></div>
+      <div class="verdict-level"><span>현재 증명</span><strong id="highest-level">L0</strong><small>이 브라우저에서 다시 측정 전</small></div>
+    </section>
+
+    <section class="level-strip panel" aria-label="성공 단계">
+      <div data-level="1"><b>L1</b><span>metadata</span></div><div data-level="2"><b>L2</b><span>format URL</span></div><div data-level="3"><b>L3</b><span>browser save</span></div><div data-level="4"><b>L4</b><span>JS bytes</span></div><div data-level="5"><b>L5</b><span>local process</span></div><div data-level="6"><b>L6</b><span>MP3</span></div><div data-level="7"><b>L7</b><span>1080p mux</span></div><div data-level="8"><b>L8</b><span>Android Chrome</span></div>
+    </section>
+
+    <section class="control panel">
+      <label for="video-input">테스트 영상</label>
+      <div class="control-row"><input id="video-input" value="Sq5Dj0U06vQ" autocomplete="off" spellcheck="false" /><button id="run-core-button" class="button primary" type="button">핵심 실험 전체 실행</button></div>
+      <div class="samples" id="samples"></div>
+      <p class="legal">공개 콘텐츠의 네트워크·브라우저 동작만 검사합니다. CAPTCHA, 쿠키 수집, DRM 우회는 수행하지 않습니다.</p>
+    </section>
+
+    <div class="lab-grid">
+      <section class="experiment panel" id="capability-card">
+        <div class="experiment-head"><div><span class="eyebrow">01 · BROWSER</span><h2>기능 표면</h2></div><button class="button small" data-action="capabilities" type="button">실행</button></div>
+        <p>저장·미디어·워커 API 존재 여부입니다. API 존재는 YouTube 바이트 접근 성공을 뜻하지 않습니다.</p>
+        <div class="result-slot" data-slot="capabilities"></div>
+      </section>
+
+      <section class="experiment panel">
+        <div class="experiment-head"><div><span class="eyebrow">02 · ENDPOINT</span><h2>Innertube direct POST</h2></div><button class="button small" data-action="endpoints" type="button">실행</button></div>
+        <p>4개 endpoint × 최신 공개 client payload를 브라우저 origin에서 직접 호출합니다.</p>
+        <div class="result-slot" data-slot="endpoints"></div>
+      </section>
+
+      <section class="experiment panel">
+        <div class="experiment-head"><div><span class="eyebrow">03 · MINIMAL SERVER</span><h2>Vercel metadata resolver</h2></div><button class="button small" data-action="server" type="button">실행</button></div>
+        <p>같은 origin의 작은 함수가 player metadata만 요청합니다. media proxy가 아니며 cloud egress 차단을 분리합니다.</p>
+        <div class="result-slot" data-slot="server"></div>
+      </section>
+
+      <section class="experiment panel">
+        <div class="experiment-head"><div><span class="eyebrow">04 · OFFICIAL PLAYER</span><h2>YouTube iframe</h2></div><button class="button small" data-action="iframe" type="button">실행</button></div>
+        <p>공식 embed가 로드되는지와 공개 postMessage 표면만 확인합니다. media URL/bytes는 노출하지 않습니다.</p>
+        <div id="iframe-host" class="iframe-host" hidden></div>
+        <div class="result-slot" data-slot="iframe"></div>
+      </section>
+
+      <section class="experiment panel wide">
+        <div class="experiment-head"><div><span class="eyebrow">05 · GOOGLEVIDEO</span><h2>Signed media URL</h2></div><button class="button small" data-action="gvs" type="button">CORS 실험</button></div>
+        <p>합법적으로 확보한 만료 전 `*.googlevideo.com/videoplayback` URL을 넣으세요.</p>
+        <textarea id="gvs-input" rows="3" placeholder="https://…googlevideo.com/videoplayback?…"></textarea>
+        <div class="button-row"><button class="button ghost small" data-action="gvs-open" type="button">직접 열기</button><button class="button ghost small" data-action="gvs-download" type="button">download 링크</button><button class="button ghost small" data-action="gvs-video" type="button">video 재생</button><button class="button ghost small" data-action="gvs-audio" type="button">audio 재생</button></div>
+        <div id="media-host" class="media-host"></div>
+        <div class="result-slot" data-slot="gvs"></div>
+      </section>
+
+      <section class="experiment panel">
+        <div class="experiment-head"><div><span class="eyebrow">06 · SERVICE WORKER</span><h2>Opaque cache</h2></div><button class="button small" data-action="opaque" type="button">실행</button></div>
+        <p>`no-cors` 응답을 캐시할 수 있어도 JS에는 status 0, 빈 headers, null body만 보이는지 확인합니다.</p>
+        <div class="result-slot" data-slot="opaque"></div>
+      </section>
+
+      <section class="experiment panel">
+        <div class="experiment-head"><div><span class="eyebrow">07 · HLS / SABR</span><h2>Manifest & UMP preflight</h2></div><button class="button small" data-action="streaming" type="button">실행</button></div>
+        <p>HLS URL은 text fetch, SABR URL은 protobuf POST 경계를 확인합니다. URL은 GoogleVideo 입력란의 값을 사용합니다.</p>
+        <div class="result-slot" data-slot="streaming"></div>
+      </section>
+    </div>
+
+    <section class="matrix panel">
+      <div class="matrix-head"><div><span class="eyebrow">METHOD MATRIX</span><h2>2026-08 소스 조사 판정</h2></div><span>실행 결과와 별도인 코드·표준 판정</span></div>
+      <div class="table-wrap"><table><thead><tr><th>방법</th><th>최고 단계</th><th>판정</th><th>막히는 지점</th></tr></thead><tbody>
+        <tr><td>Sandbox Android/iOS</td><td>L0</td><td><span class="status fail">FAIL</span></td><td>OPTIONS 302 → Google corp login, ACAO 없음</td></tr>
+        <tr><td>youtube.com / youtubei.googleapis.com direct</td><td>L0</td><td><span class="status fail">FAIL</span></td><td>cross-origin JSON POST CORS</td></tr>
+        <tr><td>WEB_EMBEDDED_PLAYER</td><td>L1 서버 조건부</td><td><span class="status partial">PARTIAL</span></td><td>브라우저 endpoint CORS; GVS POT/403 변동</td></tr>
+        <tr><td>Kira + googlevideo</td><td>L7</td><td><span class="status partial">PARTIAL</span></td><td>확장(ytc-bridge) 또는 별도 proxy 필요</td></tr>
+        <tr><td>Official iframe</td><td>재생만</td><td><span class="status partial">PARTIAL</span></td><td>SOP; 공개 API에 media URL/bytes 없음</td></tr>
+        <tr><td>no-cors / Service Worker cache</td><td>L0</td><td><span class="status fail">FAIL</span></td><td>opaque body·headers·status 비노출</td></tr>
+        <tr><td>Cross-origin media capture/WebAudio</td><td>L0</td><td><span class="status fail">FAIL</span></td><td>origin 보호: muted/silence/tainted canvas</td></tr>
+        <tr><td>Cobalt</td><td>L7+</td><td><span class="status partial">SERVER</span></td><td>서버 resolver + media proxy + ffmpeg</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="timeline panel">
+      <div class="matrix-head"><div><span class="eyebrow">RAW LOG</span><h2>실험 기록</h2></div><button id="clear-button" class="button ghost small" type="button">지우기</button></div>
+      <pre id="raw-log" aria-live="polite">아직 실행하지 않았습니다.</pre>
+    </section>
+  </main>
+  <script type="module" src="/lab/lab.js"></script>
+</body>
+</html>

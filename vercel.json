@@ -14,6 +14,12 @@
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
       ]
+    },
+    {
+      "source": "/lab/(.*)",
+      "headers": [
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
     }
   ]
 }

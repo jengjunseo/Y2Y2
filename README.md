@@ -126,6 +126,17 @@ npm run check
 python -m pytest -q engine/windows/tests
 ```
 
+### Pure Web diagnostics
+
+Open `/lab/` to run the August 2026 browser-only endpoint, client, GoogleVideo,
+opaque-cache, iframe, HLS and SABR boundary probes. The lab reports separate
+L1–L8 proof levels and can export a JSON result for comparing Desktop and
+Android Chrome. Its same-origin `/api/lab-resolve` probe resolves metadata only;
+it never proxies media bytes.
+
+See `docs/pure-web-final-investigation-2026-08.md` for the evidence and final
+architecture decision.
+
 `.github/workflows/build-engines.yml` additionally builds the Windows portable executable and Android debug APK and smoke-tests the packaged Windows loopback protocol.
 
 ## Security / rights boundary
