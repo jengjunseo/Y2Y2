@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080a0d" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Y2Y2 Local Web DVR feasibility lab for user-authorized content" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/dvr/dvr.css" />
+  <title>Y2Y2 · Local Web DVR</title>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Y2Y2 홈"><span>Y2</span><strong>Y2Y2</strong></a>
+      <div class="title"><span class="eyebrow">LOCAL WEB DVR · DESKTOP CHROME</span><h1>공식 플레이어 렌더 결과 녹화 실험</h1></div>
+      <a class="button ghost" href="/lab/">네트워크 Lab</a>
+    </header>
+
+    <section class="verdict panel">
+      <div><span class="eyebrow">REVISED VERDICT</span><h2>기술 PoC는 <b>조건부 가능</b></h2><p>원본 스트림을 추출하지 않고, 사용자가 현재 탭 캡처를 승인한 뒤 플레이어 영역의 픽셀과 탭 오디오를 MediaRecorder로 파일화합니다.</p></div>
+      <div class="verdict-tags"><span>설치 0</span><span>실시간 녹화</span><span>재인코딩</span><span>Desktop only</span></div>
+    </section>
+
+    <section class="policy panel">
+      <strong>권리·정책 경계</strong>
+      <p>본인이 소유했거나 녹화·저장을 허가받은 콘텐츠로만 실험하세요. YouTube IFrame API를 이용한 일반 영상 다운로드·오프라인 제공은 YouTube 개발자 정책상 허용되지 않을 수 있으므로, 이 페이지는 제품 다운로드 경로가 아닌 로컬 기술 검증 도구입니다.</p>
+    </section>
+
+    <section class="setup panel">
+      <div class="section-head"><div><span class="eyebrow">01 · PLAYER</span><h2>검증할 영상 불러오기</h2></div><span id="player-badge" class="badge idle">WAITING</span></div>
+      <label for="video-input">YouTube URL 또는 11자리 영상 ID</label>
+      <div class="input-row"><input id="video-input" value="M7lc1UVf-VE" autocomplete="off" spellcheck="false" /><button id="load-button" class="button primary" type="button">공식 플레이어 로드</button></div>
+      <p class="hint">기본값은 YouTube IFrame API 공식 문서의 예제 영상입니다. 임베드 금지·연령 제한·DRM 콘텐츠는 동작하지 않을 수 있습니다.</p>
+    </section>
+
+    <section class="stage panel">
+      <div class="section-head"><div><span class="eyebrow">02 · CAPTURE TARGET</span><h2>녹화 대상 영역</h2></div><span id="capture-mode" class="badge idle">NOT CAPTURED</span></div>
+      <div id="capture-target" class="capture-target">
+        <div id="player"><div class="player-placeholder"><b>Y2Y2 DVR</b><span>먼저 공식 플레이어를 불러오세요.</span></div></div>
+      </div>
+      <div class="stage-meta"><span id="player-state">플레이어 대기</span><span id="source-size">영역 크기 측정 전</span></div>
+    </section>
+
+    <section class="controls panel">
+      <div class="section-head"><div><span class="eyebrow">03 · RECORDER</span><h2>현재 탭 캡처 세션</h2></div><time id="timer">00:00</time></div>
+      <ol class="steps"><li><b>세션 시작</b>을 누릅니다.</li><li>Chrome 공유 창에서 반드시 <b>현재 탭</b>과 <b>탭 오디오 공유</b>를 선택합니다.</li><li>영역 제한 성공 후 녹화를 시작합니다.</li></ol>
+      <div class="options">
+        <label><span>출력</span><select id="record-kind"><option value="video">영상 + 오디오</option><option value="audio">오디오만 (WebM/Opus)</option></select></label>
+        <label><span>재생 속도</span><select id="playback-rate"><option value="1">1× · 권장</option><option value="2">2× · 결과도 2배속</option></select></label>
+        <label class="check"><input id="disk-mode" type="checkbox" checked /><span>가능하면 파일에 직접 쓰기</span></label>
+        <label class="check"><input id="auto-stop" type="checkbox" checked /><span>영상 종료 시 자동 정지</span></label>
+      </div>
+      <div class="button-row">
+        <button id="session-button" class="button primary" type="button">캡처 세션 시작</button>
+        <button id="record-button" class="button record" type="button" disabled>녹화 시작</button>
+        <button id="pause-button" class="button" type="button" disabled>일시정지</button>
+        <button id="stop-button" class="button" type="button" disabled>녹화 정지</button>
+        <button id="end-session-button" class="button ghost" type="button" disabled>세션 끝내기</button>
+      </div>
+      <p id="session-note" class="hint">권한은 저장되지 않지만, 한 캡처 세션 안에서는 여러 영상을 연속 녹화할 수 있습니다.</p>
+    </section>
+
+    <div class="lower-grid">
+      <section class="panel result">
+        <div class="section-head"><div><span class="eyebrow">OUTPUT</span><h2>결과 파일</h2></div><span id="output-badge" class="badge idle">EMPTY</span></div>
+        <video id="preview" controls playsinline hidden></video>
+        <div id="empty-output" class="empty">녹화가 끝나면 미리보기와 저장 링크가 여기에 표시됩니다.</div>
+        <a id="download-link" class="button primary download" hidden>결과 다운로드</a>
+        <p id="output-meta" class="hint"></p>
+      </section>
+
+      <section class="panel diagnostics">
+        <div class="section-head"><div><span class="eyebrow">RUNTIME</span><h2>기능 진단</h2></div><button id="export-button" class="button ghost small" type="button">JSON 내보내기</button></div>
+        <div id="capability-list" class="capability-list"></div>
+        <pre id="log" aria-live="polite">페이지를 열었습니다.</pre>
+      </section>
+    </div>
+
+    <section class="limits panel">
+      <span class="eyebrow">WHAT THIS DOES NOT PROVE</span>
+      <div><p><b>원본 품질이 아닙니다.</b> 디코드된 화면을 다시 인코딩하며 플레이어 화질을 강제할 수 없습니다.</p><p><b>MP3/MP4를 보장하지 않습니다.</b> 이 PoC는 브라우저가 제공하는 MediaRecorder 포맷을 사용합니다.</p><p><b>Android 경로가 아닙니다.</b> Element Capture는 데스크톱 Chrome 전용입니다.</p><p><b>오디오는 영역 제한되지 않습니다.</b> 선택한 탭의 모든 소리가 녹음되므로 다른 소리를 재생하지 마세요.</p></div>
+    </section>
+  </main>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script type="module" src="/dvr/dvr.js"></script>
+</body>
+</html>
+

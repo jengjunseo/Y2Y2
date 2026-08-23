@@ -126,6 +126,29 @@ npm run check
 python -m pytest -q engine/windows/tests
 ```
 
+### Pure Web diagnostics
+
+Open `/lab/` to run the August 2026 browser-only endpoint, client, GoogleVideo,
+opaque-cache, iframe, HLS and SABR boundary probes. The lab reports separate
+L1–L8 proof levels and can export a JSON result for comparing Desktop and
+Android Chrome. Its same-origin `/api/lab-resolve` probe resolves metadata only;
+it never proxies media bytes.
+
+See `docs/pure-web-final-investigation-2026-08.md` for the evidence and final
+architecture decision.
+
+### Local Web DVR experiment
+
+Open `/dvr/` on desktop Chrome to test a different, non-extraction path for
+content you own or are authorized to record. After an explicit current-tab and
+tab-audio grant, the page uses Element Capture (or Region Capture fallback) and
+MediaRecorder to record the official player's rendered result. It is real-time,
+re-encoded, desktop-only, and does not claim MP3/MP4 or source-quality output.
+
+See `docs/web-dvr-feasibility-2026-08.md` for the corrected technical verdict,
+runtime constraints, and the YouTube policy boundary. Cloud DVR is evaluated
+there but intentionally not implemented.
+
 `.github/workflows/build-engines.yml` additionally builds the Windows portable executable and Android debug APK and smoke-tests the packaged Windows loopback protocol.
 
 ## Security / rights boundary
@@ -139,3 +162,4 @@ Use Y2Y2 only for content you own, content whose rights holder permits downloadi
 See:
 - `docs/adr/0001-distributed-local-engine.md`
 - `docs/adr/0002-relay-queue-hybrid-engine.md`
+
