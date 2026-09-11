@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Y2Y2 · Personal</title><link rel="stylesheet" href="/style.css"></head>
+<body><main>
+<header><a href="/" class="brand">Y2Y2<span>PERSONAL</span></a><span class="pill">이 PC에서 저장</span></header>
+<section class="intro"><p class="eyebrow">광고 없이, 내 파일로.</p><h1>링크를 붙여넣으면<br>준비는 끝.</h1><p>원하는 화질이나 음질을 고르면 이 PC에 바로 저장합니다.</p></section>
+<form id="form" class="panel"><label for="url">YouTube 링크</label><div class="input-row"><input id="url" required autocomplete="off" spellcheck="false" placeholder="https://youtu.be/…"><button id="analyze" type="submit">분석</button></div><p class="hint">다운로드 권한이 있는 영상에 사용하세요.</p></form>
+<p id="notice" role="status" aria-live="polite"></p>
+<section id="video" class="panel" hidden><div class="video-info"><img id="thumbnail" alt=""><div><h2 id="title"></h2><p id="meta"></p></div></div><div class="choices"><label>파일 형식<select id="type"><option value="mp4">MP4 · 영상 + 소리</option><option value="mp3">MP3 · 소리만</option></select></label><label><span id="quality-label">화질</span><select id="quality"></select></label><button id="download" type="button">저장 시작</button></div><p id="quality-note" class="hint"></p></section>
+<section class="history"><div class="section-head"><h2>내 다운로드</h2><span id="count">0개</span></div><div id="jobs"><p class="empty">저장한 파일과 진행 상황이 여기에 표시됩니다.</p></div></section>
+<footer><p>저장 폴더 <span id="folder"></span></p><p>이 개인용 버전은 PC에서 실행됩니다. 웹사이트만으로 동작하는 버전은 아닙니다.</p><button id="quit" class="secondary" type="button">Y2Y2 종료</button></footer>
+</main><script type="module" src="/app.js"></script></body></html>

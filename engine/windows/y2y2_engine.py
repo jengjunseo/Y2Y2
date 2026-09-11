@@ -17,6 +17,7 @@ import unicodedata
 import urllib.parse
 import webbrowser
 from dataclasses import dataclass
+from contextlib import contextmanager
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -83,6 +84,14 @@ def bundled_deno_path() -> str | None:
         if path.is_file():
             return str(path)
     return None
+
+
+def javascript_runtimes() -> dict:
+    deno = bundled_deno_path()
+    if deno:
+        return {"deno": {"path": deno}}
+    node = shutil.which("node")
+    return {"node": {"path": node}} if node else {}
 
 def validate_source_url(raw: str) -> str:
     if not isinstance(raw, str) or len(raw) > 2048:
@@ -169,10 +178,15 @@ class EngineStore:
             self.config.pair_code = f"{secrets.randbelow(1_000_000):06d}"
             return self.config.pair_code
 
+    @contextmanager
     def _connect(self):
         db = sqlite3.connect(self.db_path, timeout=30, check_same_thread=False)
         db.row_factory = sqlite3.Row
-        return db
+        try:
+            with db:
+                yield db
+        finally:
+            db.close()
 
     def _init_db(self):
         with self._connect() as db:
@@ -348,9 +362,7 @@ class MediaProcessor:
             "noplaylist": True,
             "skip_download": True,
         }
-        deno = bundled_deno_path()
-        if deno:
-            options["js_runtimes"] = {"deno": {"path": deno}}
+        options.update(js_runtimes=javascript_runtimes(), socket_timeout=20, retries=2)
         with yt_dlp.YoutubeDL(options) as ydl:
             info = ydl.extract_info(url, download=False)
         formats = info.get("formats") or []
@@ -401,9 +413,7 @@ class MediaProcessor:
             "ffmpeg_location": ffmpeg_exe,
             "nopart": False,
         }
-        deno = bundled_deno_path()
-        if deno:
-            common["js_runtimes"] = {"deno": {"path": deno}}
+        common.update(js_runtimes=javascript_runtimes(), socket_timeout=20, retries=2, fragment_retries=2)
         if job["mediaType"] == "mp3":
             options = {
                 **common,
@@ -420,6 +430,7 @@ class MediaProcessor:
             options = {
                 **common,
                 "format": (
+                    f"bestvideo[height={q}][ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/"
                     f"bestvideo[height={q}][ext=mp4]+bestaudio[ext=m4a]/"
                     f"best[height={q}][ext=mp4]"
                 ),

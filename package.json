@@ -5,9 +5,10 @@
   "type": "module",
   "engines": { "node": "24.x" },
   "scripts": {
+    "check:personal": "node --check engine/windows/personal/app.js && python -m unittest discover -s engine/windows/tests -p test_personal.py",
     "check:web": "node --check public/engine-client.js && node --check public/relay-client.js && node --check public/app.js && node --check public/sw.js && node --check public/web-helper.js",
     "check:relay": "node --check relay/core.js && node --check api/_relay.js && node --check api/_relay-workflow.js && node --check api/relay.js && node --test tests/relay.test.js",
-    "check": "npm run check:web && npm run check:relay"
+    "check": "npm run check:web && npm run check:relay && node --test tests/web-resolver.test.js"
   },
   "dependencies": {
     "@vercel/blob": "2.8.0",
