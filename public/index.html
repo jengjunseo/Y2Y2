@@ -1,74 +1,13 @@
 <!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#09090b" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="description" content="Y2Y2 Pure Web — browser-only YouTube stream resolver experiment" />
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/styles.css" />
-  <title>Y2Y2 · Pure Web</title>
-</head>
-<body>
-  <main class="shell">
-    <header class="topbar">
-      <div class="brand"><div class="brand-mark">Y2</div><div><h1>Y2Y2</h1><p>PURE WEB EXPERIMENT</p></div></div>
-      <span id="web-badge" class="badge good">WEB ONLY</span>
-    </header>
-
-    <section class="hero panel">
-      <div>
-        <span class="eyebrow">NO ENGINE · NO EXTENSION · NO SERVER RESOLVER</span>
-        <h2>링크 하나로, 브라우저만 써본다.</h2>
-        <p>Y2Y2가 이 브라우저에서 직접 YouTube player endpoint를 호출하고, 실제로 받은 스트림만 표시합니다.</p>
-      </div>
-      <div class="facts">
-        <span>사용자 네트워크</span><span>클라이언트 직접 resolve</span><span>실시간 CORS probe</span>
-      </div>
-    </section>
-
-    <section class="composer panel">
-      <label for="url-input">YouTube 링크</label>
-      <div class="input-row">
-        <input id="url-input" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…" />
-        <button id="resolve-button" class="button primary">분석</button>
-      </div>
-      <div class="composer-footer">
-        <span>본인이 다운로드할 권한이 있는 콘텐츠에만 사용하세요.</span>
-        <button id="paste-button" class="text-button" type="button">붙여넣기</button>
-      </div>
-    </section>
-
-    <section id="status-card" class="status-card panel hidden">
-      <div class="status-head"><span class="eyebrow">RESOLVER</span><span id="resolver-state" class="badge">WAITING</span></div>
-      <div id="status-log" class="status-log"></div>
-    </section>
-
-    <section id="result" class="result hidden">
-      <article class="video-card panel">
-        <img id="thumbnail" alt="" />
-        <div class="video-meta">
-          <span class="eyebrow">VIDEO</span>
-          <h2 id="video-title"></h2>
-          <p id="video-subtitle"></p>
-        </div>
-      </article>
-
-      <div class="section-title"><div><span class="eyebrow">ONE FILE</span><h2>바로 받을 수 있는 MP4</h2></div><span class="muted">video + audio 포함</span></div>
-      <div id="progressive-list" class="format-list"></div>
-
-      <div class="section-title"><div><span class="eyebrow">ADAPTIVE</span><h2>고화질 / 오디오 실험실</h2></div><span class="muted">브라우저 CORS를 실제 검사</span></div>
-      <div id="adaptive-list" class="format-list"></div>
-    </section>
-
-    <section class="notes panel">
-      <span class="eyebrow">WHAT THIS BUILD PROVES</span>
-      <p>분석 성공 = 순수 웹 resolver가 실제 브라우저에서 살아 있음. MP4 직접 열기 성공 = signed media URL도 살아 있음. CORS probe 성공 = 향후 브라우저 내 MP3/mux까지 확장 가능.</p>
-    </section>
-  </main>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="/app.js"></script>
-</body>
-</html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121413"><meta name="description" content="광고 없는 Y2Y2 개인용 다운로드. 이 PC에서 MP4와 MP3로 저장하세요.">
+<title>Y2Y2 · Personal</title><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="manifest" href="/manifest.webmanifest"><link rel="stylesheet" href="/personal.css">
+<style>.open-link{display:inline-block;text-decoration:none;background:#c4e7a6;color:#192117;border-radius:10px;padding:13px 22px;font-weight:700}.steps{padding-left:22px;color:#b6c2b7}.steps li{margin:8px 0}.setup h2{margin-bottom:12px}.setup p{color:#b6c2b7}.local-code{font:inherit;color:#e0ead8}footer a{color:#b9d6a5}</style>
+</head><body><main>
+<header><a href="/" class="brand">Y2Y2<span>PERSONAL</span></a><span class="pill">이 PC에서 저장</span></header>
+<section class="intro"><p class="eyebrow">광고 없이, 내 파일로.</p><h1>링크를 붙여넣고,<br>내 PC에 저장.</h1><p>MP4 영상과 MP3 오디오를 개인용 Y2Y2에서 저장합니다.</p></section>
+<section class="panel setup"><h2>먼저 PC에서 Y2Y2를 실행하세요.</h2><ol class="steps"><li>개인용 폴더의 <span class="local-code">Start-Y2Y2.cmd</span>를 더블클릭합니다.</li><li>아래에 영상 링크를 넣고 개인용 화면으로 이동합니다.</li><li>MP4 또는 MP3를 골라 저장합니다.</li></ol><a id="open-personal" class="open-link" href="http://127.0.0.1:49273/">실행 중인 Y2Y2 열기</a></section>
+<form id="form" class="panel"><label for="url">YouTube 링크</label><div class="input-row"><input id="url" required autocomplete="off" spellcheck="false" placeholder="https://youtu.be/…"><button type="submit">내 PC에서 분석</button></div><p class="hint">다운로드 권한이 있는 영상에 사용하세요.</p></form>
+<p id="notice" role="status" aria-live="polite"></p>
+<footer><p>다운로드는 이 PC에서 실행됩니다. 개인용 프로그램이 실행 중이어야 하며, 다른 기기의 PC를 원격으로 연결하지는 않습니다.</p><p>영상 링크와 다운로드 기록은 이 사이트의 서버로 전송되지 않습니다.</p><p><a href="https://github.com/jengjunseo/Y2Y2" target="_blank" rel="noopener noreferrer">소스 코드</a></p></footer>
+</main><script type="module" src="/portal.js"></script></body></html>

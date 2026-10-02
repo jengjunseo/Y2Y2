@@ -1,10 +1,10 @@
 {
-  "name": "Y2Y2 Pure Web",
+  "name": "Y2Y2 Personal",
   "short_name": "Y2Y2",
-  "description": "Browser-only YouTube stream resolver experiment",
+  "description": "광고 없는 개인용 MP4 · MP3 다운로드",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
+  "background_color": "#121413",
+  "theme_color": "#121413",
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

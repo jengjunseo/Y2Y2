@@ -11,6 +11,7 @@ const result = $('#result');
 const statusCard = $('#status-card');
 const statusLog = $('#status-log');
 const resolverState = $('#resolver-state');
+let resolving = false;
 
 $('#paste-button').addEventListener('click', async () => {
   try {
@@ -26,6 +27,7 @@ input.addEventListener('keydown', (event) => {
 });
 
 async function resolveCurrent() {
+  if (resolving) return;
   const videoId = parseVideoId(input.value.trim());
   if (!videoId) return toast('올바른 YouTube 링크 또는 11자리 영상 ID를 넣어 주세요.');
 
@@ -47,10 +49,10 @@ async function resolveCurrent() {
     renderProgressive(streaming.formats || [], json.videoDetails?.title || videoId);
     renderAdaptive(streaming.adaptiveFormats || [], json.videoDetails?.title || videoId);
     result.classList.remove('hidden');
-    setResolverState('SUCCESS', 'good');
+    setResolverState('URL RECEIVED', 'good');
   } catch (error) {
     console.error(error);
-    log(error.message || String(error), 'bad');
+    log(friendlyNetworkError(error), 'bad');
     setResolverState('FAILED', 'bad');
   } finally {
     setBusy(false);
@@ -82,11 +84,16 @@ async function resolveWithClients(videoId) {
         credentials: 'omit',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(15000),
       });
       if (!response.ok) throw new Error(`${client.label}: HTTP ${response.status}`);
       const json = await response.json();
       if (!json.streamingData) {
         throw new Error(`${client.label}: ${json.playabilityStatus?.reason || json.playabilityStatus?.status || '스트림 없음'}`);
+      }
+      const formats = [...(json.streamingData.formats || []), ...(json.streamingData.adaptiveFormats || [])];
+      if (!formats.some(hasDirectUrl)) {
+        throw new Error(`${client.label}: 직접 사용할 수 있는 스트림 주소가 없습니다. 다운로드 준비가 완료되지 않았습니다.`);
       }
       return { client, json };
     } catch (error) {
@@ -169,11 +176,25 @@ function bindFormatActions(host, formats, title) {
           credentials: 'omit',
           redirect: 'follow',
           headers: { Range: 'bytes=0-1' },
+          signal: AbortSignal.timeout(15000),
         });
         if (!response.ok && response.status !== 206) throw new Error(`HTTP ${response.status}`);
-        const chunk = await response.arrayBuffer();
+        if (response.status !== 206) {
+          await response.body?.cancel();
+          throw new Error('서버가 Range 요청을 지원하지 않습니다. 전체 파일을 검사 목적으로 받지 않습니다.');
+        }
+        const reader = response.body.getReader();
+        let bytes = 0;
+        try {
+          while (bytes < 2) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            bytes += chunk.value.byteLength;
+          }
+        } finally { await reader.cancel(); }
+        if (!bytes) throw new Error('응답에서 미디어 바이트를 읽지 못했습니다.');
         output.className = 'probe-result good-text';
-        output.textContent = `CORS 성공 · JS가 ${chunk.byteLength} bytes 읽음 → 브라우저 변환 가능 후보`;
+        output.textContent = `CORS 성공 · JS가 ${bytes} bytes 읽음 · 전체 파일 저장과 변환은 아직 미검증`;
       } catch (error) {
         output.className = 'probe-result bad-text';
         output.textContent = `CORS 차단/요청 실패 · ${friendlyNetworkError(error)}`;
@@ -189,8 +210,9 @@ function parseVideoId(value) {
   if (/^[A-Za-z0-9_-]{11}$/.test(value)) return value;
   try {
     const url = new URL(value);
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return null;
     if (url.hostname === 'youtu.be') return validId(url.pathname.split('/').filter(Boolean)[0]);
-    if (url.hostname.endsWith('youtube.com')) {
+    if (url.hostname === 'youtube.com' || url.hostname.endsWith('.youtube.com')) {
       const watch = validId(url.searchParams.get('v'));
       if (watch) return watch;
       const parts = url.pathname.split('/').filter(Boolean);
@@ -227,6 +249,8 @@ function sanitizeName(value) {
 }
 
 function setBusy(busy) {
+  resolving = busy;
+  $('#paste-button').disabled = busy;
   resolveButton.disabled = busy;
   resolveButton.textContent = busy ? '분석 중…' : '분석';
   input.disabled = busy;
@@ -268,7 +292,8 @@ function formatBytes(bytes) {
 
 function friendlyNetworkError(error) {
   const text = error?.message || String(error);
-  return /Failed to fetch|NetworkError|Load failed/i.test(text) ? '브라우저가 응답 body 접근을 허용하지 않음' : text;
+  if (/timeout|aborted/i.test(text)) return '응답 시간이 초과되었습니다.';
+  return /Failed to fetch|NetworkError|Load failed/i.test(text) ? '브라우저에서 요청을 완료하지 못했습니다. 네트워크 또는 서버의 브라우저 접근 정책 문제일 수 있습니다.' : text;
 }
 
 function toast(message) {

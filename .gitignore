@@ -17,3 +17,6 @@ android/app/build/
 android/**/build/
 engine/windows/.venv/
 engine/windows/vendor/
+engine/windows/.runtime/
+engine/windows/personal-data/
+engine/windows/downloads/
