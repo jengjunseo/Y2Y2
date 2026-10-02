@@ -1,6 +1,6 @@
-# Current status — September 2026
+# Current status — October 2026
 
-The deployed `public/` app is a pure-web experiment, not the relay product described in the historical README below. Its sandbox player endpoint currently redirects to Google corporate login and does not provide a usable public CORS path.
+The `public/` app is a personal download portal that opens the same-PC application. Paste a URL after starting `Start-Y2Y2.cmd`; analysis and saving happen in the local page. See [Vercel deployment behavior](docs/vercel-personal-portal.md). The older pure-web experiment remains at `/experiment.html`; its sandbox endpoint did not provide a usable public CORS path in the September investigation.
 
 An optional **Y2Y2 Personal** edition now provides a same-PC browser interface without pairing: run `engine/windows/Start-Y2Y2.cmd` after preparing the documented runtime. Full 720p MP4 and 320 kbps MP3 downloads were verified from the browser on a public Blender fixture. This requires a local Python/media runtime and is **not** an install-free mobile web solution. See [setup, evidence and limits](docs/personal-2026-09-12.md).
 

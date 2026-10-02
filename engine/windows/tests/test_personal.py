@@ -64,6 +64,12 @@ class PersonalHTTPTests(unittest.TestCase):
         self.assertEqual(self.request("/session", {"Host": "attacker.example", "X-Y2Y2-Local": "1"})[0], 403)
         self.assertEqual(self.request("/", {"Host": "attacker.example"})[0], 403)
 
+    def test_public_site_can_link_to_page_but_cannot_read_session(self):
+        headers = {"Sec-Fetch-Site": "cross-site", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Dest": "document"}
+        self.assertEqual(self.request("/", headers)[0], 200)
+        self.assertEqual(self.request("/session", {**headers, "X-Y2Y2-Local": "1"})[0], 403)
+        self.assertEqual(self.request("/v1/jobs", {**headers, "Authorization": "Bearer " + personal.SESSION})[0], 403)
+
     def test_cross_origin_and_same_site_ports_denied(self):
         for origin in ["https://evil.example", "https://y2-y2.vercel.app", "http://127.0.0.1:9999"]:
             self.assertEqual(self.request("/session", {"Origin": origin, "X-Y2Y2-Local": "1"})[0], 403)

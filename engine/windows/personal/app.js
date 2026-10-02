@@ -1,4 +1,8 @@
 const $ = (s) => document.querySelector(s);
+const seed = new URLSearchParams(location.hash.slice(1));
+if (/^[\w-]{11}$/.test(seed.get('video') || '')) {
+  $('#url').value = `https://www.youtube.com/watch?v=${seed.get('video')}`;
+}
 let token = '', selected = null, busy = false, polling = false, jobSignature = '';
 function notice(message, error = false) { $('#notice').textContent = message; $('#notice').className = error ? 'error' : ''; }
 function sourceUrl(raw) {

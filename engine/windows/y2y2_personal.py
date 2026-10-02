@@ -59,9 +59,15 @@ class PersonalHandler(engine.Handler):
         self._json(403, {"error": "Cross-origin access disabled"})
 
     def do_GET(self):
-        if not self._require_origin():
-            return
         path = urllib.parse.urlsplit(self.path).path
+        # A public site may link to the UI, but cannot read its session or API.
+        navigation = (self.headers.get("Host") == AUTHORITY
+                      and self.headers.get("Sec-Fetch-Mode") == "navigate"
+                      and self.headers.get("Sec-Fetch-Dest") == "document")
+        if path == "/" and navigation:
+            pass
+        elif not self._require_origin():
+            return
         if path == "/session":
             if self.headers.get("X-Y2Y2-Local") != "1":
                 self._json(403, {"error": "Local page required"})
