@@ -1,0 +1,11 @@
+[build]
+dockerfilePath = "backend/Dockerfile"
+watchPatterns = ["backend/**", "device/**", "package.json", "package-lock.json", "public/personal.css"]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+numReplicas = 1
+sleepApplication = false

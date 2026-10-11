@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121413">
+<meta name="description" content="광고 없이, 원본 화질의 영상과 음성을 이 기기에 분할 저장하고 합칩니다.">
+<title>Y2Y2 · 내 기기에 저장</title><link rel="stylesheet" href="/assets/style.css">
+</head><body><main>
+<header><a href="/" class="brand">Y2Y2<span>WEB</span></a><span class="pill" id="connection">연결 확인 중</span></header>
+<section class="intro"><p class="eyebrow">광고 없이, 원본 화질 그대로.</p><h1>받는 순간부터,<br>내 기기에 저장.</h1><p>영상과 음성을 나누어 받고, 이 기기에서 하나로 합칩니다.</p></section>
+<form id="login" class="panel" hidden><h2>나만의 다운로드 공간</h2><label for="password">비밀번호</label><div class="input-row"><input id="password" type="password" autocomplete="current-password" required><button type="submit">접속</button></div></form>
+<div id="workspace" hidden>
+<form id="form" class="panel"><label for="url">YouTube 링크</label><div class="input-row"><input id="url" type="text" required autocomplete="off" spellcheck="false" placeholder="https://youtu.be/…"><button id="inspect" type="submit">분석</button></div><p class="hint">다운로드 권한이 있는 공개 영상에 사용하세요.</p></form>
+<section id="result" class="panel" hidden><h2 id="title"></h2><div class="choices"><div><label for="format">원본 화질 · 저장 형식</label><select id="format"></select></div><button id="create" type="button">기기에 받기</button></div><p class="hint">병합 중에는 조각과 완성 파일을 함께 둘 공간이 필요합니다. 영상 용량의 약 2배 이상을 확보해 주세요.</p></section>
+</div>
+<p id="notice" role="status" aria-live="polite"></p>
+<section class="history"><div class="section-head"><h2>이 기기의 작업</h2><span id="count"></span></div><div id="history"></div></section>
+<footer><p>받은 조각은 이 브라우저의 기기 저장 공간에 기록됩니다. 병합이 끝나면 ‘파일 저장’을 눌러 다운로드 폴더로 내보내세요.</p><p>페이지를 닫거나 백그라운드로 전환하면 작업이 중단될 수 있습니다. 전송 링크가 유효한 동안 이어받을 수 있습니다.</p><p>브라우저 데이터를 지우면 보관된 작업도 삭제됩니다. 원본 코덱에 따라 이 기기에서 재생되지 않을 수 있습니다.</p><p>서버는 원본 분석과 조각 전달을 담당합니다. 영상 파일을 서버 저장소에 보관하지 않습니다.</p></footer>
+</main><script type="module" src="/assets/device-app.js"></script></body></html>

@@ -1,0 +1,13 @@
+.git
+.vercel
+node_modules
+**/__pycache__
+**/.pytest_cache
+**/.env*
+**/personal-data
+**/downloads
+**/vendor
+android
+engine
+backend/public/device-*.js
+backend/public/style.css
