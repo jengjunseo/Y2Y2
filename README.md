@@ -1,4 +1,8 @@
-# Y2Y2 Web — October 11, 2026
+# Y2Y2 device storage web — October 11, 2026
+
+The new `backend/` + `device/` implementation downloads separate source tracks in 4 MiB chunks to the receiving browser's disk storage, resumes after reload, and merges without re-encoding. The backend only resolves and relays ranges; it stores no media. Original 1080p60 MP4 and 2160p60 WebM paths were verified locally, including encoded-packet preservation for 4K. Railway deployment is prepared but not provisioned; cloud YouTube access and physical mobile saving still require verification. See [architecture, setup, evidence and limits](docs/device-storage-web.md).
+
+# Existing provider-based Vercel production — October 11, 2026
 
 The root website uses a Vercel backend and a VideoScale developer API account. Users paste a public YouTube link, choose MP4 or MP3, and save the prepared file. It requires no PC program or Home Engine. Real MP4 video with audio and MP3 192 kbps files were downloaded in full and decoded without errors. Physical iOS/Android saving has not been tested. The free provider account advertises a finite 10 GB signup grant, not unlimited or renewing free service. Web delivery is capped at 256 MB per file. See [setup, verification and limits](docs/install-free-web.md).
 

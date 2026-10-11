@@ -3,8 +3,11 @@
   "version": "0.4.0",
   "private": true,
   "type": "module",
-  "engines": { "node": "24.x" },
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
+    "build:device": "node device/build.mjs",
     "check:cloud": "node --check api/web.js && node --check public/web.js && node --test tests/cloud.test.js",
     "check:personal": "node --check engine/windows/personal/app.js && python -m unittest discover -s engine/windows/tests -p test_personal.py",
     "check:web": "node --check public/engine-client.js && node --check public/relay-client.js && node --check public/app.js && node --check public/portal.js && node --check public/sw.js && node --check public/web-helper.js",
@@ -13,6 +16,11 @@
   },
   "dependencies": {
     "@vercel/blob": "2.8.0",
+    "mediabunny": "1.61.3",
     "workflow": "4.8.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "esbuild": "0.28.2"
   }
 }

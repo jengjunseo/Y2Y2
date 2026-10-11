@@ -20,3 +20,7 @@ engine/windows/vendor/
 engine/windows/.runtime/
 engine/windows/personal-data/
 engine/windows/downloads/
+backend/public/device-app.js
+backend/public/device-worker.js
+backend/public/style.css
+backend/.data/

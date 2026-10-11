@@ -1,0 +1,85 @@
+name: Device storage web
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', 'device/**', 'package*.json', 'public/personal.css', '.dockerignore', '.github/workflows/device-web.yml']
+  pull_request:
+    paths: ['backend/**', 'device/**', 'package*.json', 'public/personal.css', '.dockerignore', '.github/workflows/device-web.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: device-web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r backend/requirements.txt
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:device
+      - run: python -m unittest discover -s backend/tests -v
+      - run: node --test device/tests/mux.test.mjs device/tests/browser.test.mjs
+      - run: docker build -f backend/Dockerfile -t y2y2-device .
+      - name: Verify bundled extractor runtime and HTTP service
+        shell: bash
+        run: |
+          docker run --rm y2y2-device python -m backend.extractor --runtime
+          docker run -d --name y2y2-smoke -p 8118:8080 y2y2-device
+          trap 'docker rm -f y2y2-smoke' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8118/health > /tmp/y2y2-health.json; then break; fi
+            sleep 1
+          done
+          python - <<'PY'
+          import json, urllib.request
+          with open('/tmp/y2y2-health.json') as f:
+              value = json.load(f)
+          assert value['mode'] == 'device-storage' and value['mediaStoredOnServer'] is False
+          assert value['authenticated'] is True and value['passwordRequired'] is False
+          for path in ['/', '/assets/device-app.js', '/assets/device-worker.js', '/assets/style.css']:
+              with urllib.request.urlopen('http://127.0.0.1:8118' + path) as response:
+                  assert response.status == 200 and response.read(100)
+          PY
+  other-browsers:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            browser: firefox
+          - os: macos-latest
+            browser: webkit
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - if: runner.os == 'macOS'
+        run: command -v ffmpeg || brew install ffmpeg
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run build:device
+      - run: node --test device/tests/browser.test.mjs
+        env:
+          Y2Y2_TEST_BROWSER: ${{ matrix.browser }}
