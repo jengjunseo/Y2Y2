@@ -69,20 +69,21 @@ export function taskId(payload) {
   if (!/^[A-Za-z0-9_-]{8,160}$/.test(id)) throw new WebError('PROVIDER_SCHEMA', '다운로드 작업 번호를 확인할 수 없습니다.', 502);
   return id;
 }
+// Diagnostics contain structure and short state names only, never identifiers,
+// file links, titles, account details or credential values.
+function responseShape(value, depth = 0, key = '') {
+  if (Array.isArray(value)) return 'array';
+  if (value && typeof value === 'object' && depth < 3) return Object.fromEntries(Object.entries(value).slice(0, 25).map(([k, v]) => [k, responseShape(v, depth + 1, k)]));
+  if (/^(status|state|task_status)$/i.test(key) && typeof value === 'string' && /^[a-z _-]{1,40}$/i.test(value)) return value;
+  return typeof value;
+}
 export function taskState(payload) {
   const data = payload?.data ?? payload;
   const status = String(data?.status ?? data?.state ?? data?.STATUS ?? '').toLowerCase();
   if (['completed', 'complete', 'finished', 'done', 'success', 'succeeded'].includes(status)) return 'ready';
   if (['failed', 'error', 'cancelled', 'canceled'].includes(status)) return 'failed';
   if (['pending', 'queued', 'processing', 'downloading', 'running', 'started', 'in_progress', 'postprocessing'].includes(status)) return 'processing';
-  // Log only response structure and short state names; never task IDs, links or credentials.
-  const shape = (value, depth = 0, key = '') => {
-    if (Array.isArray(value)) return 'array';
-    if (value && typeof value === 'object' && depth < 3) return Object.fromEntries(Object.entries(value).slice(0, 25).map(([k, v]) => [k, shape(v, depth + 1, k)]));
-    if (/status|state/i.test(key) && typeof value === 'string' && /^[a-z _-]{1,40}$/i.test(value)) return value;
-    return typeof value;
-  };
-  console.warn('Y2Y2 provider status schema', JSON.stringify(shape(payload)));
+  console.warn('Y2Y2 provider status schema', JSON.stringify(responseShape(payload)));
   throw new WebError('PROVIDER_SCHEMA', '다운로드 서비스의 작업 상태를 확인할 수 없습니다.', 502);
 }
 export function resultUrl(payload) {
@@ -93,6 +94,7 @@ export function resultUrl(payload) {
   if (!url || url.protocol !== 'https:' || url.username || url.password || url.hash ||
       !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(url.hostname) ||
       /(^|\.)(localhost|local|internal|test|invalid)$/i.test(url.hostname)) {
+    console.warn('Y2Y2 provider file schema', JSON.stringify(responseShape(payload)));
     throw new WebError('PROVIDER_SCHEMA', '안전한 파일 주소를 확인할 수 없습니다.', 502);
   }
   return url.href;
