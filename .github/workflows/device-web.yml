@@ -2,7 +2,7 @@ name: Device storage web
 
 on:
   push:
-    branches: [main, codex/owned-backend]
+    branches: [main]
     paths: ['backend/**', 'device/**', 'package*.json', 'public/personal.css', '.dockerignore', '.github/workflows/device-web.yml']
   pull_request:
     paths: ['backend/**', 'device/**', 'package*.json', 'public/personal.css', '.dockerignore', '.github/workflows/device-web.yml']
@@ -10,6 +10,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: device-web-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
