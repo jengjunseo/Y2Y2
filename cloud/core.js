@@ -72,6 +72,10 @@ export function taskId(payload) {
 // Diagnostics contain structure and short state names only, never identifiers,
 // file links, titles, account details or credential values.
 function responseShape(value, depth = 0, key = '') {
+  if (/^(download_url|downloadUrl|url|DOWNLOAD_URL)$/.test(key) && typeof value === 'string') {
+    try { const u = new URL(value); return { type: 'url', protocol: u.protocol, hostname: u.hostname, port: u.port,
+      hasCredentials: Boolean(u.username || u.password), hasFragment: Boolean(u.hash) }; } catch { return 'invalid-url'; }
+  }
   if (Array.isArray(value)) return 'array';
   if (value && typeof value === 'object' && depth < 3) return Object.fromEntries(Object.entries(value).slice(0, 25).map(([k, v]) => [k, responseShape(v, depth + 1, k)]));
   if (/^(status|state|task_status)$/i.test(key) && typeof value === 'string' && /^[a-z _-]{1,40}$/i.test(value)) return value;
