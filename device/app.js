@@ -76,6 +76,7 @@ function start(job) {
       if (files.has(job.id)) URL.revokeObjectURL(files.get(job.id).url);
       files.set(job.id, { url: URL.createObjectURL(data.file), file: data.file, filename: data.filename });
       job.phase = 'ready'; job.message = `${size(data.file.size)} · 병합 완료. 파일 저장을 누르세요.`; active = null;
+      notice('기기에서 병합과 검증을 마쳤습니다. 파일 저장을 눌러 다운로드 폴더로 내보내세요.');
     } else {
       job.message = data.message; active = null;
       notice(data.message, data.type === 'error');
