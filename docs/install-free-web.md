@@ -37,6 +37,8 @@ End users only open the website and enter the site's private passphrase once on 
 - yt-dlp latest release confirmed via GitHub API: `2026.08.19`.
 - Fresh Vercel Python preview `dpl_qvoHvHdhEvc24CBpxqDf5UHHJNRf`, region `iad1`, using that release: `aqz-KE-bpKQ` and `YE7VzlLtp-4` both returned `YOUTUBE_BOT_CHECK`; neither source resolution nor media bytes succeeded. Do not revive this path based on a successful deploy alone.
 - VideoScale public website successfully analyzed `aqz-KE-bpKQ` in the browser: 1 video+audio format (MP4 360p, H.264/AAC), 40 video-only and 20 audio-only formats. This proves public format lookup, not authenticated API access or full downloads.
+- A Vercel Node preview reached the documented `gate.apiscrape.net:16262` endpoint and received HTTP 401 without credentials, confirming network reachability. It does not prove account access.
+- Candidate commit `3390979` deployed successfully to a protected Vercel preview. `/api/web?action=status` returned `{ "configured": false, "authenticated": false }`, and the browser correctly displayed the unavailable state with no local-engine handoff. The GitHub web check passed.
 - Local automated tests use an explicit synthetic contract fixture. They verify authentication, input restrictions, ticket integrity, MP3 request construction, polling, finite response limits and failure handling. They are not live provider certification.
 
 ## Limits
