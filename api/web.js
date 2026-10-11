@@ -69,7 +69,8 @@ export async function handle(request, { env = process.env, provider = providerRe
     }
     throw new WebError('BAD_ACTION', '요청을 확인해 주세요.', 404);
   } catch (error) {
-    if (error instanceof WebError) return json({ error: error.message, code: error.code }, error.status);
+    if (error instanceof WebError) return json({ error: error.message, code: error.code,
+      ...(env.VERCEL_ENV === 'preview' && error.diagnostic ? { diagnostic: error.diagnostic } : {}) }, error.status);
     return json({ error: '요청을 처리하지 못했습니다.', code: 'INTERNAL' }, 500);
   }
 }

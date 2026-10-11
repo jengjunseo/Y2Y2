@@ -1,7 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 export class WebError extends Error {
-  constructor(code, message, status = 400) { super(message); this.code = code; this.status = status; }
+  constructor(code, message, status = 400, diagnostic) { super(message); this.code = code; this.status = status; this.diagnostic = diagnostic; }
 }
 export function videoId(raw) {
   const value = String(raw || '').trim();
@@ -84,7 +84,7 @@ export function taskState(payload) {
   if (['failed', 'error', 'cancelled', 'canceled'].includes(status)) return 'failed';
   if (['pending', 'queued', 'processing', 'downloading', 'running', 'started', 'in_progress', 'postprocessing'].includes(status)) return 'processing';
   console.warn('Y2Y2 provider status schema', JSON.stringify(responseShape(payload)));
-  throw new WebError('PROVIDER_SCHEMA', '다운로드 서비스의 작업 상태를 확인할 수 없습니다.', 502);
+  throw new WebError('PROVIDER_SCHEMA', '다운로드 서비스의 작업 상태를 확인할 수 없습니다.', 502, responseShape(payload));
 }
 export function resultUrl(payload) {
   const data = payload?.data ?? payload;
@@ -95,7 +95,7 @@ export function resultUrl(payload) {
       !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(url.hostname) ||
       /(^|\.)(localhost|local|internal|test|invalid)$/i.test(url.hostname)) {
     console.warn('Y2Y2 provider file schema', JSON.stringify(responseShape(payload)));
-    throw new WebError('PROVIDER_SCHEMA', '안전한 파일 주소를 확인할 수 없습니다.', 502);
+    throw new WebError('PROVIDER_SCHEMA', '안전한 파일 주소를 확인할 수 없습니다.', 502, responseShape(payload));
   }
   return url.href;
 }
