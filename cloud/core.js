@@ -95,6 +95,9 @@ export function resultUrl(payload) {
   const raw = data?.download_url ?? data?.downloadUrl ?? data?.url ?? data?.DOWNLOAD_URL;
   let url;
   try { url = new URL(raw); } catch {}
+  // Observed VideoScale response uses HTTP for this HTTPS-capable S3 endpoint.
+  // Change only the scheme, preserving the signed path/query byte-for-byte.
+  if (url?.protocol === 'http:' && url.hostname === 's3.fr-par.scw.cloud' && !url.port && !url.username && !url.password) url.protocol = 'https:';
   if (!url || url.protocol !== 'https:' || url.username || url.password || url.hash ||
       !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(url.hostname) ||
       /(^|\.)(localhost|local|internal|test|invalid)$/i.test(url.hostname)) {

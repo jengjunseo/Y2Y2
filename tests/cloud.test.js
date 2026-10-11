@@ -95,6 +95,14 @@ test('unsafe file URLs and provider failures never produce a ready response', as
     assert.ok(response.status >= 400); assert.equal((await response.json()).state, undefined);
   }
 });
+
+test('observed provider S3 file links upgrade to HTTPS without changing signatures', () => {
+  const path = '/test-bucket/video%20file.mp4?X-Amz-Signature=synthetic%2Fsignature&X-Amz-Date=20261011';
+  assert.equal(resultUrl({ download_url: 'http://s3.fr-par.scw.cloud' + path }), 'https://s3.fr-par.scw.cloud' + path);
+  for (const host of ['s3.fr-par.scw.cloud.evil.test', 's3.fr-par.scw.cloud:8080', 'user:password@s3.fr-par.scw.cloud']) {
+    assert.throws(() => resultUrl({ download_url: 'http://' + host + path }));
+  }
+});
 test('two API credentials enable public use without a site password or cookie', async () => {
   const publicEnv = { ...env, Y2Y2_WEB_PASSWORD: '' };
   assert.equal(configured(publicEnv), true);
