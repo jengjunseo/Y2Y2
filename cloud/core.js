@@ -75,6 +75,14 @@ export function taskState(payload) {
   if (['completed', 'complete', 'finished', 'done', 'success', 'succeeded'].includes(status)) return 'ready';
   if (['failed', 'error', 'cancelled', 'canceled'].includes(status)) return 'failed';
   if (['pending', 'queued', 'processing', 'downloading', 'running', 'started', 'in_progress', 'postprocessing'].includes(status)) return 'processing';
+  // Log only response structure and short state names; never task IDs, links or credentials.
+  const shape = (value, depth = 0, key = '') => {
+    if (Array.isArray(value)) return 'array';
+    if (value && typeof value === 'object' && depth < 3) return Object.fromEntries(Object.entries(value).slice(0, 25).map(([k, v]) => [k, shape(v, depth + 1, k)]));
+    if (/status|state/i.test(key) && typeof value === 'string' && /^[a-z _-]{1,40}$/i.test(value)) return value;
+    return typeof value;
+  };
+  console.warn('Y2Y2 provider status schema', JSON.stringify(shape(payload)));
   throw new WebError('PROVIDER_SCHEMA', '다운로드 서비스의 작업 상태를 확인할 수 없습니다.', 502);
 }
 export function resultUrl(payload) {
