@@ -1,4 +1,5 @@
 import { configured, providerRequest, signingSecret } from '../cloud/provider.js';
+import { downloadResponse } from '../cloud/file.js';
 import { WebError, downloadSpec, equalSecret, normalizeFormats, readTicket, resultUrl, signTicket, taskId, taskState, videoId } from '../cloud/core.js';
 
 const COOKIE = '__Host-y2y2_web';
@@ -25,10 +26,18 @@ async function bodyOf(request) {
     throw new WebError('BAD_BODY', '요청을 확인해 주세요.');
   } finally { reader.releaseLock(); }
 }
-export async function handle(request, { env = process.env, provider = providerRequest } = {}) {
+export async function handle(request, { env = process.env, provider = providerRequest, fileFetcher = fetch } = {}) {
   try {
     const action = new URL(request.url).searchParams.get('action') || 'status';
     const secret = signingSecret(env), passwordRequired = Boolean(env.Y2Y2_WEB_PASSWORD);
+    if (request.method === 'GET' && action === 'file') {
+      if (!configured(env)) throw new WebError('NOT_CONFIGURED', '웹 다운로드 서비스가 아직 연결되지 않았습니다.', 503);
+      if (request.headers.get('sec-fetch-site') === 'cross-site') throw new WebError('BAD_ORIGIN', '이 사이트에서 직접 저장해 주세요.', 403);
+      session(request, secret, passwordRequired);
+      const file = readTicket(new URL(request.url).searchParams.get('ticket'), secret, 'file');
+      return await downloadResponse(file.url, file.format, { fetcher: fileFetcher,
+        signal: AbortSignal.any([request.signal, AbortSignal.timeout(250000)]) });
+    }
     if (request.method === 'GET' && action === 'status') {
       let authenticated = false;
       if (configured(env)) { try { session(request, secret, passwordRequired); authenticated = true; } catch {} }
@@ -65,7 +74,7 @@ export async function handle(request, { env = process.env, provider = providerRe
       if (state === 'failed') throw new WebError('DOWNLOAD_FAILED', '파일 생성에 실패했습니다. 새 다운로드를 요청하기 전에 영상과 무료 한도를 확인해 주세요.', 422);
       if (state !== 'ready') return json({ state });
       const url = resultUrl(await provider('/api/download/' + encodeURIComponent(job.id), { env }));
-      return json({ state: 'ready', url, format: job.format });
+      return json({ state: 'ready', url: '/api/web?action=file&ticket=' + encodeURIComponent(signTicket({ url, format: job.format }, secret, 'file', 3600000)), format: job.format });
     }
     throw new WebError('BAD_ACTION', '요청을 확인해 주세요.', 404);
   } catch (error) {

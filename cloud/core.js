@@ -86,7 +86,7 @@ export function taskState(payload) {
   const status = String(data?.status ?? data?.state ?? data?.STATUS ?? '').toLowerCase();
   if (['completed', 'complete', 'finished', 'done', 'success', 'succeeded'].includes(status)) return 'ready';
   if (['failed', 'error', 'cancelled', 'canceled'].includes(status)) return 'failed';
-  if (['pending', 'queued', 'processing', 'downloading', 'running', 'started', 'in_progress', 'postprocessing'].includes(status)) return 'processing';
+  if (['pending', 'queued', 'processing', 'downloading', 'running', 'started', 'in_progress', 'postprocessing', 'trying_combination'].includes(status)) return 'processing';
   console.warn('Y2Y2 provider status schema', JSON.stringify(responseShape(payload)));
   throw new WebError('PROVIDER_SCHEMA', '다운로드 서비스의 작업 상태를 확인할 수 없습니다.', 502, responseShape(payload));
 }

@@ -1,5 +1,5 @@
 {
-  "functions": { "api/web.js": { "maxDuration": 60 } },
+  "functions": { "api/web.js": { "maxDuration": 300 } },
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "headers": [
     {

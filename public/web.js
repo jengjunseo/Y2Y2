@@ -59,7 +59,7 @@ async function poll() {
       if (result.state === 'ready') {
         $('#progress').hidden = true; $('#job-title').textContent = '파일 준비 완료';
         $('#job-state').textContent = '아래 버튼을 눌러 이 기기에 저장하세요. 링크에는 유효기간이 있습니다.';
-        const link = $('#download'); link.href = result.url; link.textContent = result.format.toUpperCase() + ' 파일 저장'; link.hidden = false;
+        const link = $('#download'); link.href = result.url; link.download = 'Y2Y2.' + result.format; link.textContent = result.format.toUpperCase() + ' 파일 저장'; link.hidden = false;
         notice(); return;
       }
       if (Date.now() >= deadline) throw new Error('아직 작업 중입니다. 잠시 후 상태를 다시 확인하세요. 새 다운로드를 요청할 필요는 없습니다.');

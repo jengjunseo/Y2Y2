@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handle } from '../api/web.js';
-import { normalizeFormats, readTicket, resultUrl, signTicket, videoId } from '../cloud/core.js';
+import { normalizeFormats, readTicket, resultUrl, signTicket, taskState, videoId } from '../cloud/core.js';
+import { downloadResponse } from '../cloud/file.js';
 import { configured, providerRequest, signingSecret } from '../cloud/provider.js';
 
 const env = { Y2Y2_WEB_PASSWORD: 'test-only-password-at-least-16', Y2Y2_VIDEO_API_USER: 'test-user', Y2Y2_VIDEO_API_PASSWORD: 'test-provider-password' };
@@ -76,7 +77,9 @@ test('owner flow creates a fixed MP3 conversion and exposes a link only after re
   assert.equal(calls.filter(c => c.path === '/api/download/test-task-1234').length, 0);
   completed = true;
   const ready = await (await invoke('poll', { ticket: job.ticket })).json();
-  assert.equal(ready.state, 'ready'); assert.equal(ready.format, 'mp3'); assert.match(ready.url, /^https:\/\/files\.example\.org/);
+  assert.equal(ready.state, 'ready'); assert.equal(ready.format, 'mp3'); assert.match(ready.url, /^\/api\/web\?action=file&ticket=/);
+  const file = readTicket(new URL(ready.url, 'https://site.test').searchParams.get('ticket'), signingSecret(env), 'file');
+  assert.equal(file.url, 'https://files.example.org/public-test.mp3?signature=fixture');
 });
 test('provider transport uses a fixed authenticated host and refuses redirects or unbounded payloads', async () => {
   await providerRequest('/api/formats?video_url=fixture', { env, fetcher: async (url, options) => {
@@ -97,11 +100,30 @@ test('unsafe file URLs and provider failures never produce a ready response', as
 });
 
 test('observed provider S3 file links upgrade to HTTPS without changing signatures', () => {
+  assert.equal(taskState({ progress: 0, site: 'youtube', status: 'trying_combination' }), 'processing');
   const path = '/test-bucket/video%20file.mp4?X-Amz-Signature=synthetic%2Fsignature&X-Amz-Date=20261011';
   assert.equal(resultUrl({ download_url: 'http://s3.fr-par.scw.cloud' + path }), 'https://s3.fr-par.scw.cloud' + path);
   for (const host of ['s3.fr-par.scw.cloud.evil.test', 's3.fr-par.scw.cloud:8080', 'user:password@s3.fr-par.scw.cloud']) {
     assert.throws(() => resultUrl({ download_url: 'http://' + host + path }));
   }
+});
+
+test('file delivery requires a signed file ticket and streams attachments from the fixed host', async () => {
+  const publicEnv = { ...env, Y2Y2_WEB_PASSWORD: '' }; let calls = 0;
+  const fileFetcher = async (url, options) => {
+    calls++; assert.equal(new URL(url).host, 's3.fr-par.scw.cloud'); assert.equal(options.redirect, 'error');
+    return new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': '3' } });
+  };
+  const url = 'https://s3.fr-par.scw.cloud/test-bucket/test.mp3?signature=synthetic';
+  const ticket = signTicket({ url, format: 'mp3' }, signingSecret(publicEnv), 'file', 10000);
+  const invoke = token => handle(new Request('https://site.test/api/web?action=file&ticket=' + encodeURIComponent(token)), { env: publicEnv, fileFetcher });
+  assert.equal((await invoke(ticket + 'x')).status, 401); assert.equal(calls, 0);
+  const response = await invoke(ticket);
+  assert.equal(response.status, 200); assert.equal(response.headers.get('Content-Disposition'), 'attachment; filename="Y2Y2.mp3"');
+  assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [1, 2, 3]);
+  await assert.rejects(downloadResponse('https://evil.test/file.mp3', 'mp3', { fetcher: fileFetcher }));
+  assert.equal(calls, 1);
+  await assert.rejects(downloadResponse(url, 'mp3', { fetcher: async () => new Response('x', { headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(257 * 1024 * 1024) } }) }), error => error.code === 'FILE_TOO_LARGE');
 });
 test('two API credentials enable public use without a site password or cookie', async () => {
   const publicEnv = { ...env, Y2Y2_WEB_PASSWORD: '' };
