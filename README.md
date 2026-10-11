@@ -1,4 +1,10 @@
-# Current status — October 2026
+# Install-free Web candidate — October 11, 2026
+
+This branch implements a Vercel backend and browser interface for a VideoScale developer API account. It requires no PC program or Home Engine. **Real API downloads and mobile saving are not yet verified; production has not been replaced.** The free provider account advertises a finite 10 GB signup grant, not unlimited or renewing free service. See [setup and release verification](docs/install-free-web.md).
+
+The previous portal remains at `/personal.html`. The status below describes the currently deployed production version.
+
+# Production status — October 2, 2026
 
 The `public/` app is a personal download portal that opens the same-PC application. Paste a URL after starting `Start-Y2Y2.cmd`; analysis and saving happen in the local page. See [Vercel deployment behavior](docs/vercel-personal-portal.md). The older pure-web experiment remains at `/experiment.html`; its sandbox endpoint did not provide a usable public CORS path in the September investigation.
 
