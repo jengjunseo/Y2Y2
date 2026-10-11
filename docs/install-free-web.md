@@ -4,7 +4,7 @@ Status: implementation + local contract tests. NOT end-to-end download verified.
 
 ## What changed
 
-The candidate root page calls `/api/web`; it never connects to localhost or a Home Engine. Vercel authenticates the owner, sends a public YouTube link to the VideoScale developer API, polls the provider's task, and returns its HTTPS file link. VideoScale owns extraction, conversion and delivery. No yt-dlp, ffmpeg, Redis or Blob resource is required on Vercel. The former PC portal is preserved at `/personal.html`.
+The candidate root page calls `/api/web`; it never connects to localhost or a Home Engine. Vercel optionally checks a site password, sends a public YouTube link to the VideoScale developer API, polls the provider's task, and returns its HTTPS file link. VideoScale owns extraction, conversion and delivery. No yt-dlp, ffmpeg, Redis or Blob resource is required on Vercel. The former PC portal is preserved at `/personal.html`.
 
 Only MP4 streams that explicitly contain both video and audio are offered. On the observed public test video this was 360p. MP3 requests use the documented postprocessor field with fixed FFmpegExtractAudio options at 192 kbps. This postprocessor's actual execution must be verified against the connected account; it is not proven by unit tests.
 
@@ -16,12 +16,12 @@ Only MP4 streams that explicitly contain both video and audio are offered. On th
 
    - `Y2Y2_VIDEO_API_USER`: provider API username
    - `Y2Y2_VIDEO_API_PASSWORD`: provider API password
-   - `Y2Y2_WEB_PASSWORD`: a new private-site passphrase, at least 16 characters; do not reuse any account password
+   - Optional `Y2Y2_WEB_PASSWORD`: leave unset for password-free access, or set a new private-site passphrase of at least 16 characters. Do not reuse any account password.
 
 4. Do not paste credentials into chat, GitHub or browser JavaScript. Tell Codex when the Preview variables are saved. A new deployment is required for them to take effect.
 5. Verify real MP4 and MP3 files in the preview before adding Production variables or promoting the change. Keep the existing production portal until those checks pass.
 
-End users only open the website and enter the site's private passphrase once on their device. They do not install an engine or configure provider credentials.
+End users only open the website. If the owner sets the optional password, users enter it once on their device. Without a password, anyone who knows the URL can consume the same provider quota. Signed task and format tickets remain enforced in either mode. End users do not install an engine or configure provider credentials.
 
 ## Verification required before release
 

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handle } from '../api/web.js';
 import { normalizeFormats, readTicket, resultUrl, signTicket, videoId } from '../cloud/core.js';
-import { providerRequest } from '../cloud/provider.js';
+import { configured, providerRequest, signingSecret } from '../cloud/provider.js';
 
 const env = { Y2Y2_WEB_PASSWORD: 'test-only-password-at-least-16', Y2Y2_VIDEO_API_USER: 'test-user', Y2Y2_VIDEO_API_PASSWORD: 'test-provider-password' };
 const fixture = { title: 'Public test fixture', formats: [
@@ -42,7 +42,7 @@ test('format choices never mislabel silent video as an MP4 with audio', () => {
 test('unconfigured or unauthenticated API never calls the provider', async () => {
   let calls = 0; const provider = async () => { calls++; };
   const status = await handle(request('status'), { env: {}, provider });
-  assert.deepEqual(await status.json(), { configured: false, authenticated: false });
+  assert.deepEqual(await status.json(), { configured: false, authenticated: false, passwordRequired: false });
   assert.equal((await handle(request('inspect', { url: 'aqz-KE-bpKQ' }), { env: {}, provider })).status, 503);
   assert.equal((await handle(request('inspect', { url: 'aqz-KE-bpKQ' }), { env, provider })).status, 401);
   assert.equal(calls, 0);
@@ -89,9 +89,27 @@ test('provider transport uses a fixed authenticated host and refuses redirects o
 });
 test('unsafe file URLs and provider failures never produce a ready response', async () => {
   for (const url of ['http://files.example.org/x', 'https://localhost/x', 'https://127.0.0.1/x', 'https://user:password@files.example.org/x', 'javascript:alert(1)']) assert.throws(() => resultUrl({ url }));
-  const cookie = await login(); const ticket = signTicket({ id: 'test-task-1234', format: 'mp4' }, env.Y2Y2_WEB_PASSWORD, 'job', 10000);
+  const cookie = await login(); const ticket = signTicket({ id: 'test-task-1234', format: 'mp4' }, signingSecret(env), 'job', 10000);
   for (const status of ['failed', 'mystery']) {
     const response = await handle(request('poll', { ticket }, cookie), { env, provider: async () => ({ status }) });
     assert.ok(response.status >= 400); assert.equal((await response.json()).state, undefined);
   }
+});
+test('two API credentials enable public use without a site password or cookie', async () => {
+  const publicEnv = { ...env, Y2Y2_WEB_PASSWORD: '' };
+  assert.equal(configured(publicEnv), true);
+  assert.equal(configured({ ...publicEnv, Y2Y2_VIDEO_API_PASSWORD: '' }), false);
+  assert.equal(configured({ ...publicEnv, Y2Y2_WEB_PASSWORD: 'short' }), false);
+  const status = await handle(request('status'), { env: publicEnv });
+  assert.deepEqual(await status.json(), { configured: true, authenticated: true, passwordRequired: false });
+  let calls = 0;
+  const provider = async path => { calls++; return path.startsWith('/api/formats') ? fixture : { task_id: 'test-task-1234' }; };
+  const inspectResponse = await handle(request('inspect', { url: 'aqz-KE-bpKQ' }), { env: publicEnv, provider });
+  assert.equal(inspectResponse.status, 200);
+  const inspect = await inspectResponse.json();
+  assert.equal(JSON.stringify(inspect).includes(publicEnv.Y2Y2_VIDEO_API_PASSWORD), false);
+  const forged = inspect.ticket.slice(0, -1) + (inspect.ticket.endsWith('a') ? 'b' : 'a');
+  assert.equal((await handle(request('create', { ticket: forged, choice: 'mp4-18' }), { env: publicEnv, provider })).status, 401);
+  assert.equal(calls, 1);
+  assert.equal((await handle(request('create', { ticket: inspect.ticket, choice: 'mp4-18' }), { env: publicEnv, provider })).status, 201);
 });

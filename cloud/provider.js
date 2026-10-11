@@ -1,8 +1,17 @@
+import { createHmac } from 'node:crypto';
 import { WebError } from './core.js';
 
 const BASE = 'https://gate.apiscrape.net:16262';
 export function configured(env = process.env) {
-  return Boolean(env.Y2Y2_VIDEO_API_USER && env.Y2Y2_VIDEO_API_PASSWORD && env.Y2Y2_WEB_PASSWORD?.length >= 16);
+  return Boolean(env.Y2Y2_VIDEO_API_USER && env.Y2Y2_VIDEO_API_PASSWORD &&
+    (!env.Y2Y2_WEB_PASSWORD || env.Y2Y2_WEB_PASSWORD.length >= 16));
+}
+// Task integrity remains protected even when the owner chooses public access.
+// Derivation is server-only; API credentials never appear in tickets or responses.
+export function signingSecret(env = process.env) {
+  return createHmac('sha256', env.Y2Y2_VIDEO_API_PASSWORD || '')
+    .update(JSON.stringify(['Y2Y2 web tickets v1', env.Y2Y2_VIDEO_API_USER || '', env.Y2Y2_WEB_PASSWORD || '']))
+    .digest('hex');
 }
 export async function providerRequest(path, { body, env = process.env, fetcher = fetch } = {}) {
   const auth = Buffer.from(env.Y2Y2_VIDEO_API_USER + ':' + env.Y2Y2_VIDEO_API_PASSWORD).toString('base64');

@@ -22,6 +22,7 @@ async function refresh() {
   $('#unavailable').hidden = status.configured;
   $('#login').hidden = !status.configured || status.authenticated;
   $('#workspace').hidden = !status.configured || !status.authenticated;
+  $('#logout').hidden = !status.passwordRequired;
 }
 async function failure(error) {
   notice(error.message, true);

@@ -1,9 +1,10 @@
-import { configured, providerRequest } from '../cloud/provider.js';
+import { configured, providerRequest, signingSecret } from '../cloud/provider.js';
 import { WebError, downloadSpec, equalSecret, normalizeFormats, readTicket, resultUrl, signTicket, taskId, taskState, videoId } from '../cloud/core.js';
 
 const COOKIE = '__Host-y2y2_web';
 function json(data, status = 200, headers = {}) { return Response.json(data, { status, headers: { 'Cache-Control': 'no-store', ...headers } }); }
-function session(request, secret) {
+function session(request, secret, passwordRequired = true) {
+  if (!passwordRequired) return;
   const token = (request.headers.get('cookie') || '').split(';').map(s => s.trim()).find(s => s.startsWith(COOKIE + '='))?.slice(COOKIE.length + 1);
   if (!token) throw new WebError('LOGIN_REQUIRED', '개인용 비밀번호로 먼저 접속해 주세요.', 401);
   readTicket(token, secret, 'session');
@@ -27,11 +28,11 @@ async function bodyOf(request) {
 export async function handle(request, { env = process.env, provider = providerRequest } = {}) {
   try {
     const action = new URL(request.url).searchParams.get('action') || 'status';
-    const secret = env.Y2Y2_WEB_PASSWORD;
+    const secret = signingSecret(env), passwordRequired = Boolean(env.Y2Y2_WEB_PASSWORD);
     if (request.method === 'GET' && action === 'status') {
       let authenticated = false;
-      if (configured(env)) { try { session(request, secret); authenticated = true; } catch {} }
-      return json({ configured: configured(env), authenticated });
+      if (configured(env)) { try { session(request, secret, passwordRequired); authenticated = true; } catch {} }
+      return json({ configured: configured(env), authenticated, passwordRequired });
     }
     if (request.method !== 'POST') return json({ error: '허용되지 않은 요청입니다.' }, 405, { Allow: 'GET, POST' });
     requireOrigin(request);
@@ -39,10 +40,11 @@ export async function handle(request, { env = process.env, provider = providerRe
     const body = await bodyOf(request);
     const cookie = token => `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`;
     if (action === 'login') {
-      if (!equalSecret(body.password || '', secret)) throw new WebError('BAD_PASSWORD', '비밀번호를 확인해 주세요.', 401);
+      if (!passwordRequired) return json({ ok: true });
+      if (!equalSecret(body.password || '', env.Y2Y2_WEB_PASSWORD)) throw new WebError('BAD_PASSWORD', '비밀번호를 확인해 주세요.', 401);
       return json({ ok: true }, 200, { 'Set-Cookie': cookie(signTicket({}, secret, 'session', 604800000)) });
     }
-    session(request, secret);
+    session(request, secret, passwordRequired);
     if (action === 'logout') return json({ ok: true }, 200, { 'Set-Cookie': `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0` });
     if (action === 'inspect') {
       const id = videoId(body.url);
