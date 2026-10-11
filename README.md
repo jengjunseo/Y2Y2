@@ -1,12 +1,12 @@
-# Install-free Web candidate — October 11, 2026
+# Y2Y2 Web — October 11, 2026
 
-This branch implements a Vercel backend and browser interface for a VideoScale developer API account. It requires no PC program or Home Engine. **Real API downloads and mobile saving are not yet verified; production has not been replaced.** The free provider account advertises a finite 10 GB signup grant, not unlimited or renewing free service. See [setup and release verification](docs/install-free-web.md).
+The root website uses a Vercel backend and a VideoScale developer API account. Users paste a public YouTube link, choose MP4 or MP3, and save the prepared file. It requires no PC program or Home Engine. Real MP4 video with audio and MP3 192 kbps files were downloaded in full and decoded without errors. Physical iOS/Android saving has not been tested. The free provider account advertises a finite 10 GB signup grant, not unlimited or renewing free service. Web delivery is capped at 256 MB per file. See [setup, verification and limits](docs/install-free-web.md).
 
-The previous portal remains at `/personal.html`. The status below describes the currently deployed production version.
+Only `Y2Y2_VIDEO_API_USER` and `Y2Y2_VIDEO_API_PASSWORD` are required on the server. `Y2Y2_WEB_PASSWORD` is optional: omit it for password-free use. Anyone with access to the website then shares the same free quota.
 
-# Production status — October 2, 2026
+# Previous PC portal — October 2, 2026
 
-The `public/` app is a personal download portal that opens the same-PC application. Paste a URL after starting `Start-Y2Y2.cmd`; analysis and saving happen in the local page. See [Vercel deployment behavior](docs/vercel-personal-portal.md). The older pure-web experiment remains at `/experiment.html`; its sandbox endpoint did not provide a usable public CORS path in the September investigation.
+The previous personal download portal is preserved at `/personal.html`. It opens the same-PC application. Paste a URL after starting `Start-Y2Y2.cmd`; analysis and saving happen in the local page. See [previous deployment behavior](docs/vercel-personal-portal.md). The older pure-web experiment remains at `/experiment.html`; its sandbox endpoint did not provide a usable public CORS path in the September investigation.
 
 An optional **Y2Y2 Personal** edition now provides a same-PC browser interface without pairing: run `engine/windows/Start-Y2Y2.cmd` after preparing the documented runtime. Full 720p MP4 and 320 kbps MP3 downloads were verified from the browser on a public Blender fixture. This requires a local Python/media runtime and is **not** an install-free mobile web solution. See [setup, evidence and limits](docs/personal-2026-09-12.md).
 
