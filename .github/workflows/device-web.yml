@@ -52,3 +52,30 @@ jobs:
               with urllib.request.urlopen('http://127.0.0.1:8118' + path) as response:
                   assert response.status == 200 and response.read(100)
           PY
+  other-browsers:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            browser: firefox
+          - os: macos-latest
+            browser: webkit
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - if: runner.os == 'macOS'
+        run: command -v ffmpeg || brew install ffmpeg
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run build:device
+      - run: node --test device/tests/browser.test.mjs
+        env:
+          Y2Y2_TEST_BROWSER: ${{ matrix.browser }}

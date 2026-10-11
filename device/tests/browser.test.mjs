@@ -62,7 +62,8 @@ test('browser stores chunks in OPFS, resumes after reload, muxes, verifies, and 
     await page.goto(origin);
     await page.locator('#url').fill('aqz-KE-bpKQ'); await page.locator('#inspect').click();
     await page.locator('#result').waitFor({ state: 'visible' }); await page.locator('#create').click();
-    await page.waitForFunction(() => JSON.parse(localStorage.getItem('y2y2-device-jobs-v1') || '[]')[0]?.received >= 4 * 1024 * 1024);
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('y2y2-device-jobs-v1') || '[]')[0]?.received >= 4 * 1024 * 1024 || document.querySelector('#notice.error')?.textContent);
+    assert.equal(await page.locator('#notice.error').count(), 0, await page.locator('#notice').textContent());
     await page.getByRole('button', { name: '일시중단', exact: true }).click();
     await page.getByRole('button', { name: '이어받기 / 병합 재시도', exact: true }).waitFor({ state: 'visible' });
     await page.reload();

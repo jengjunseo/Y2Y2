@@ -140,6 +140,7 @@ self.onmessage = async ({ data }) => {
     });
   } catch (error) {
     postMessage({ type: controller.signal.aborted ? 'paused' : 'error', message: controller.signal.aborted ? '기기에 받은 조각을 보관했습니다. 이어받기를 누르면 계속합니다.' :
-      error.name === 'QuotaExceededError' ? '브라우저의 기기 저장 한도가 부족합니다. 비공개 모드라면 일반 창을 사용하거나 보관 파일을 삭제해 주세요. 낮은 화질을 원하면 직접 선택해 주세요.' : error.message });
+      error.name === 'QuotaExceededError' ? '브라우저의 기기 저장 한도가 부족합니다. 비공개 모드라면 일반 창을 사용하거나 보관 파일을 삭제해 주세요. 낮은 화질을 원하면 직접 선택해 주세요.' :
+      error.name === 'NotSupportedError' ? '이 브라우저에서는 기기 분할 기록을 지원하지 않습니다. 최신 브라우저의 일반 창을 사용해 주세요.' : error.message });
   } finally { running = false; }
 };
